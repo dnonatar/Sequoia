@@ -59,7 +59,7 @@ To start the visualization:
 ## Demo
 This is the visualization demo with pre-loaded data. 
 
-_attach link_
+http://research.vis.ninja/sequoia/
 
 ## Visualization Tutorial
 
