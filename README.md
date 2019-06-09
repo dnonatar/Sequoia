@@ -31,7 +31,7 @@ read_ID | kmer | values
 
 Parameters 
 * arg1 : input file (csv)
-* arg2 : dynamic time warping penalty
+* arg2 : dynamic time warping penalty (integer)
 
 Run backend_computation.py in the directory where you want data stored. 
 
@@ -39,7 +39,11 @@ Example:
 
 ``` python backend_computation.py data.csv 0 ```
 
-After the script is run, a new folder named data_0 will be created in your directory. The ‘0’ in data_0 comes from the penalty choice. 
+After the script is run, a new folder named data_0 will be created in your directory. The ‘0’ in data_0 comes from the penalty choice.
+In the folder, there are subfolders and a file as follows.
+* distance_matrices : a folder containing distances among signals
+* raw_signal : a folder containing raw signals of each kmer
+* boxplot_data.csv : a csv file containing information for drawing boxplots 
 
 2.) Visualization (D3.js)
 
