@@ -54,7 +54,7 @@ To start the visualization:
 1. Place current.html into the same directory as the data folder from the previous step
 2. Open the Web Server from Chrome
 3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the data and current.html
-4. open the Web Server URL and click curent.html
+4. open the Web Server URL and click current.html
 
 ## Demo
 This is the visualization demo with pre-loaded data. 
