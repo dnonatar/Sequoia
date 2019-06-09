@@ -8,16 +8,16 @@ In order to use the tool, two separated steps must be executed.  This is because
 
 1.) Backend Computation (Python)
 
-required python library
+Required python library
 * pandas
 * numpy
 * os 
 * sys
 * dtaidistance (python3 only)
 
-please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
+Please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
 
-Input format (csv file)
+Input format 
 
 read_ID | kmer | values
 ------------ | ------------- | ------------
@@ -30,12 +30,12 @@ read_ID | kmer | values
 ``` python  backend_computation.py arg1 arg2 ```
 
 Parameters 
-* arg1 : input file (need to show / explain the input format)
-* arg2 :  DTW penalty
+* arg1 : input file (csv)
+* arg2 : dynamic time warping penalty
 
 Run backend_computation.py in the directory where you want data stored. 
 
-example:
+Example:
 
 ``` python backend_computation.py data.csv 0 ```
 
@@ -51,6 +51,11 @@ To start the visualization:
 2. Open the Web Server from Chrome
 3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the data and current.html
 4. open the Web Server URL and click curent.html
+
+## Demo
+This is the visualization demo with pre-loaded data. 
+
+_attach link_
 
 ## Visualization Tutorial
 
