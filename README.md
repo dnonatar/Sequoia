@@ -52,7 +52,21 @@ To start the visualization:
 3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the data and current.html
 4. open the Web Server URL and click curent.html
 
+## Visualization Tutorial
+
+This is how the landing page looks like.
 
 ![image 1](/images/first_screen.png)
+
+
+By clicking at the kmer in the boxplots panel, signals from each kmer can be displayed on the t-SNE plot. Up to 4 kmers can be chosen. Chosen kmers are moved to the 'Selected  Kmers' panel. Clicking at a kmer in that panel would remove it from the t-SNE plot and move it back to the above panel.
+
+![image 2](/images/second_screen.png)
+
+
+If you click (or hover) at a point in the t-SNE plot, the raw signal corresponding to that point would be displayed above. You can also use a brush(mouse dragging) to select a group of points.
+
+![image 3](/images/brush.png)
+
 
 
