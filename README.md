@@ -4,7 +4,7 @@ A web interface tool that can visualize the similarity of nanopore sequencing da
 
 In order to use the tool, two separated steps must be executed.  This is because the tool comprises of two major parts. The first part is the dynamic time warping algorithm that measures the similarities between signals. The second part is the visualization based on the data generated from the first part.	
 
-## Usage
+## Overview
 
 1.) Backend Computation (Python)
 
@@ -17,7 +17,7 @@ required python library
 
 please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
 
-Input format
+Input format (csv file)
 
 read_ID | kmer | values
 ------------ | ------------- | ------------
@@ -25,6 +25,7 @@ read_ID | kmer | values
 ...... | AACCC | 628_671_629_658_673_718_717_698_691_700....
 ...... | ...... | ......
  
+##### Usage
 
 ``` python  backend_computation.py arg1 arg2 ```
 
