@@ -53,6 +53,6 @@ To start the visualization:
 4. open the Web Server URL and click curent.html
 
 
-![image 1]('./image/first_screen.png')
+![image 1](/images/first_screen.png)
 
 
