@@ -58,7 +58,7 @@ This is how the landing page looks like.
 
 ![image 1](/images/first_screen.png)
 
-The boxplots can be sorted by either the alphabets, medians, or the max values of the distances within each kmer. The textbox next to the sorting option helps filtering the kmers. You can type "*" to mean "any alphabet". For example, if you type "*CCC*", all kmers with CCC in the middle would come up. 
+The boxplots can be sorted by either the alphabets, medians, or the max values of the distances within each kmer. The textbox next to the sorting option helps filtering the kmers. You can type \* to mean "any alphabet". For example, if you type \*CCC\*, all kmers with CCC in the middle would come up. 
 
 By clicking at the kmer in the boxplots panel, signals from each kmer can be displayed on the t-SNE plot. Up to 4 kmers can be chosen. Chosen kmers are moved to the 'Selected  Kmers' panel. Clicking at a kmer in that panel would remove it from the t-SNE plot and move it back to the above panel.
 
