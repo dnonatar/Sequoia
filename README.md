@@ -15,7 +15,7 @@ required python library
 * sys
 * dtaidistance (python3 only)
 
-please refer to …… for further details on the dtaidistance library.
+please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
 
 Input format
 
