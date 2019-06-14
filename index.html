@@ -2,10 +2,10 @@
 <html>
 
 <head>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src='https://raw.githack.com/karpathy/tsnejs/master/tsne.js'></script>
-<script src="http://d3js.org/queue.v1.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src='//raw.githack.com/karpathy/tsnejs/master/tsne.js'></script>
+<script src="//d3js.org/queue.v1.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 
 <style>
             /* tell the SVG path to be a thin blue line without any area fill */
@@ -13,7 +13,7 @@
 						stroke-width: 1; fill: none; 
 				} 
 				.line_hover { 
-						stroke: blue; stroke-width: 3;
+						stroke: orange; stroke-width: 3;
 				} 
 				.line_click {
             stroke: black; 
@@ -44,11 +44,18 @@
             top: 15px;
             left: 30px;
          }
-				.text-input {
+				.kmer-filter {
 	            position: absolute;
 	            top: 15px;
 	            left: 300px;
 	      }
+
+				.choose-folder {
+	            position: absolute;
+	            top: 15px;
+	            left: 500px;
+	      }
+				
 				.viewport {
             position: absolute;
             top: 45px;
@@ -87,10 +94,10 @@
         }
 				.raw_signal {
             position: absolute;
-            top: -30px;
+            top: 30px;
             left: 400px;
             width: 350px;
-            height: 300px;
+            height: 200px;
         }
 				div.tooltip {	
     				position: absolute;			
@@ -138,11 +145,18 @@
 	</form>
 </div>
 
-<div class = "text-input">
+<div class = "kmer-filter">
 		<form name="myform" onkeyup="return handleType()">
 	    <input type="text" id="myVal1" placeholder="Partial or Full Kmer">
 		</form>
-	</div>
+</div>
+
+<div class = "choose-folder">
+		<form name="myform" onSubmit="return handleFolder()">
+			<input name="Submit"  type="submit" value="Choose" >
+	    <input type="text" id="folder" placeholder="Type Input Folder">
+		</form>
+</div>
 
 <div class = "viewport"></div>
 <div class = "viewport_selected_text">
@@ -159,12 +173,39 @@
 <div class = "clear_readID">
 	<button type ="button" onclick= "clear_ID()"> Clear Read ID</button>
 </div>
+
 <script type="text/javascript">
 var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]
 var tsne_colors = []
+var folder = ''
+
 function clear_ID() {
 	d3.select(".read_ID").selectAll('*').remove()
 }
+
+function handleFolder(event){
+		folder = document.getElementById("folder").value
+
+		d3.csv(folder+'/boxplot_data.csv', function(data) {
+			function changeBoxplot(){
+				d3.select('#tsne').selectAll('circle').remove()
+				d3.select(".viewport").selectAll("*").remove()
+				var form = document.getElementById("sort")
+				var form_val;
+				for(var i=0; i<form.length; i++){
+      		  if(form[i].checked){
+      		    form_val = form[i].id;}} 
+				
+				draw_boxplot(data, form_val)
+			}	
+			var dataDim = d3.select("#sort")
+			dataDim.on("change", changeBoxplot)
+			draw_boxplot(data, 'kmer')
+		})
+
+		return false;
+}
+
 function handleType(event){
 	//kmer_list = []
 	console.log(kmer_list)
@@ -245,7 +286,7 @@ function draw_tsne(position, kmer_list) {
 		
 		var width = 500;
 		var height = 400;
-		var padding = 65;
+		//var padding = 65;
 		
 		d3.select('#tsne').remove()
 		var svg = d3.select('.tsne')
@@ -255,12 +296,40 @@ function draw_tsne(position, kmer_list) {
 				.attr("id", "tsne")		
 		var xScale = d3.scaleLinear()
 				.domain(d3.extent(position, function(d) {return d[0];	}))	
-				.range([padding,width - padding * 2])
+				//.range([padding,width - padding * 2])	
+				.range([40,width-20])
 				.nice();
+
 		var yScale = d3.scaleLinear()
 				.domain(d3.extent(position, function(d) {return d[1]; }))
-				.range([height - padding, padding])
-				.nice();  
+				//.range([height - padding, padding])
+				.range([20, height-40])
+				.nice();
+
+		var x_axis = d3.axisBottom()
+                   .scale(xScale);  
+
+		svg.append("g")
+			 	.attr("transform", "translate(0,360)")
+       	.call(x_axis);
+
+		svg.append("text")
+				.attr("transform", "translate(255,395)")
+				.style("text-anchor","middle")
+				.text("t-SNE 1")
+
+		var y_axis = d3.axisLeft()
+                   .scale(yScale);  
+
+		svg.append("g")
+			 	.attr("transform", "translate(40,0)")
+       	.call(y_axis);
+
+		svg.append("text")
+				.attr('transform', 'translate(15,190)rotate(-90)')
+				.style("text-anchor","middle")
+				.text("t-SNE 2")
+
 		var brush = d3.brush()
 									//.extent([[0, 0], [100, 100]])
 									//.on("brush", highlightBrushedCircles)
@@ -269,6 +338,7 @@ function draw_tsne(position, kmer_list) {
 		d3.select('#tsne').append("g")
 				.call(brush)
 				.call(brush.move)
+		/*
 		d3.select('#tsne').append('g')
         .append('rect')
         .attr('class', 'tsne_edges')
@@ -280,6 +350,7 @@ function draw_tsne(position, kmer_list) {
         .style('stroke', 'black')
         .style('stroke-width', '1px')
 				.style('opacity', 1)
+		*/
 		var circles = svg.append("g")
 				.selectAll('circle')
 			  .data(position)
@@ -791,23 +862,7 @@ var div = d3.select("body").append("div")
     .attr("class", "tooltip")				
     .style("opacity", 0);
 box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]  //reset when changing sort type
-d3.csv('./data/boxplot_data.csv', function(data) {
-		
-		function changeBoxplot(){
-			d3.select('#tsne').selectAll('circle').remove()
-			d3.select(".viewport").selectAll("*").remove()
-			var form = document.getElementById("sort")
-			var form_val;
-			for(var i=0; i<form.length; i++){
-      	  if(form[i].checked){
-      	    form_val = form[i].id;}} 
-			
-			draw_boxplot(data, form_val)
-		}
-		var dataDim = d3.select("#sort")
-		dataDim.on("change", changeBoxplot)
-		draw_boxplot(data, 'kmer')
-})
+
 kmer_list = []
 function draw_boxplot(data, form_val) {
 		
@@ -1214,9 +1269,9 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 function draw_signal(data_click,data_hover, data_brush) {
 					var data = data_hover.concat(data_click).concat(data_brush)
 					
-					var m = [80, 80, 80, 80]; // margins
+					var m = [40, 40, 40, 40]; // margins
         	var w = 700 - m[1] - m[3]; // width
-        	var h = 300 - m[0] - m[2]; // height
+        	var h = 200 - m[0] - m[2]; // height
         	 
         	
         	// X scale will fit all values from data[] within pixels 0-w
