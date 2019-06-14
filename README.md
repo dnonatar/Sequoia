@@ -27,23 +27,22 @@ read_ID | kmer | values
  
 #### Usage
 
-``` python  backend_computation.py arg1 arg2 ```
+``` python  backend_computation.py arg1 arg2 arg3```
 
 Parameters 
-* arg1 : input file (csv)
+* arg1 : directory of input file (csv)
 * arg2 : dynamic time warping penalty (integer)
+* arg3 : output directory
 
-Run backend_computation.py in the directory where you want data stored. 
-
-Example:
-
-``` python backend_computation.py data.csv 0 ```
-
-After the script is run, a new folder named data_0 will be created in your directory. The ‘0’ in data_0 comes from the penalty choice.
-In the folder, there are subfolders and a file as follows.
+After running backend_computation.py, a new folder wil be created (as you specified in arg3). In the folder, there are subfolders and a file necessary for the visualization as follows.
 * distance_matrices : a folder containing distances among signals
 * raw_signal : a folder containing raw signals of each kmer
 * boxplot_data.csv : a csv file containing information for drawing boxplots 
+
+Example:
+
+``` python ./backend_computation.py data.csv 0 ./myoutput```
+
 
 2.) Visualization (D3.js)
 
@@ -51,9 +50,9 @@ First, download the web server for Chrome from here
 https://chrome.google.com/webstore/detail/web-server-for-chrome/ofhbbkphhbklhfoeikjpcbhemlocgigb?hl=en
 
 To start the visualization:
-1. Place current.html into the same directory as the data folder from the previous step
+1. Place current.html into the same directory as the output folder from the previous step
 2. Open the Web Server from Chrome
-3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the data and current.html
+3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the output folder and current.html
 4. open the Web Server URL and click current.html
 
 ## Demo
