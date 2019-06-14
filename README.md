@@ -56,15 +56,15 @@ To start the visualization:
 4. open the Web Server URL and click index.html
 
 ## Demo
-This is the visualization demo with pre-loaded data. 
+This is the visualization demo with pre-loaded data. Use 'data' for the input folder.
 
 http://research.vis.ninja/sequoia/
 
 ## Visualization Tutorial
 
-This is how the landing page looks like.
+This is how the landing page looks like. In the 'Type Input Folder' textbox, type in the name of the folder you would like to use. Once you click 'Choose', the boxplots for each of the 256 kmers will show up.
 
-![image 1](/images/first_screen.png)
+![image 1](/images/landing_page.png)
 
 The boxplots can be sorted by either the alphabets, medians, or the max values of the distances within each kmer. The textbox next to the sorting option helps filtering the kmers. You can type \* to mean "any alphabet". For example, if you type \*CCC\*, all kmers with CCC in the middle would come up. 
 
