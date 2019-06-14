@@ -50,10 +50,10 @@ First, download the web server for Chrome from here
 https://chrome.google.com/webstore/detail/web-server-for-chrome/ofhbbkphhbklhfoeikjpcbhemlocgigb?hl=en
 
 To start the visualization:
-1. Place current.html into the same directory as the output folder from the previous step
+1. Place index.html into the same directory as the output folder from the previous step
 2. Open the Web Server from Chrome
-3. In the Web Server, click at CHOOSE FOLDER and select the directory that you place the output folder and current.html
-4. open the Web Server URL and click current.html
+3. In the Web Server, click at CHOOSE FOLDER and select the directory that you placed both the output folder and index.html
+4. open the Web Server URL and click index.html
 
 ## Demo
 This is the visualization demo with pre-loaded data. 
