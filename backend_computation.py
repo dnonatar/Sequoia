@@ -13,6 +13,9 @@ data_all = pd.read_csv(input_directory,header=0)
 ## penalty
 penalty = int(sys.argv[2])
 
+## output folder
+out_folder = str(sys.argv[3])
+
 ## calculating distance matrices for t-SNE
 series_data = []
 for i in data_all.index:
@@ -27,13 +30,13 @@ ds = pd.DataFrame(ds)
 ds.index = data_all['kmer']
 ds.columns = data_all['kmer']
 
-os.makedirs('./data_'+str(penalty)+'/distance_matrices/')
-os.makedirs('./data_'+str(penalty)+'/raw_signal/')
+os.makedirs(out_folder+'/distance_matrices/')
+os.makedirs(out_folder+'/raw_signal/')
 for kmer_row in data_all['kmer'].unique():
     for kmer_column in data_all['kmer'].unique():
         current_ds = ds.loc[kmer_row, kmer_column]
         current_ds.columns = range(0,len(current_ds))
-        outdir = './data_'+str(penalty)+'/distance_matrices/'+ kmer_row + '/'					## output location for distance matrices
+        outdir = out_folder+'/distance_matrices/'+ kmer_row + '/'					## output location for distance matrices
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         filename = kmer_row + '_' + kmer_column + '.csv'
@@ -76,14 +79,14 @@ boxplot_dict = dict([('kmer', kmer_list),
                     ])
 
 boxplot_df = pd.DataFrame.from_dict(boxplot_dict)
-boxplot_df.to_csv('./data_'+str(penalty)+'/boxplot_data.csv', index=False)   ## output directory for boxplot data
+boxplot_df.to_csv(out_folder+'/boxplot_data.csv', index=False)   ## output directory for boxplot data
 
 
 ## creating datasets for drawing raw signals in d3
 data_all.kmer.unique()
 for kmer in data_all.kmer.unique():
     data_kmer = data_all.loc[data_all['kmer']==kmer,:]
-    filename = './data_'+str(penalty)+'/raw_signal/'+kmer+'_signal.csv'    ## output directory for raw signal data
+    filename = out_folder+'/raw_signal/'+kmer+'_signal.csv'    ## output directory for raw signal data
     data_kmer.to_csv(filename, index=False)
 
 
