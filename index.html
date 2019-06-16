@@ -13,13 +13,13 @@
 						stroke-width: 1; fill: none; 
 				} 
 				.line_hover { 
-						stroke: orange; stroke-width: 3;
+						stroke: black; stroke-width: 3;
 				} 
 				.line_click {
-            stroke: black; 
+            stroke: brown; 
 				}
 				.line_brush {
-            stroke: black;
+            stroke: brown;
 						opacity : 0.5;
 				}  
 				.axis { 
@@ -207,8 +207,7 @@ function handleFolder(event){
 }
 
 function handleType(event){
-	//kmer_list = []
-	console.log(kmer_list)
+
 	//d3.select('#tsne').selectAll('circle').remove()
 	//d3.selectAll('.line_click').remove()
 	text = document.getElementById("myVal1").value
@@ -223,7 +222,7 @@ function handleType(event){
 	} else if (text.length == 4) {
 		text = text + '*'
 	}
-	d3.csv('./data/boxplot_data.csv', function(data) {
+	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		var kmerValues = data.map(d => d['kmer'])
 		
 		function matching(kmer) {
@@ -469,7 +468,7 @@ function draw_tsne(position, kmer_list) {
 function printReadID(kmer_list, row) {
 		if (kmer_list.length == 1) {
 			kmer1 = kmer_list[0]
-			filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
+			filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
 			queue()
 				.defer(d3.csv, filename1)
 				.await(print_ID)
@@ -485,8 +484,8 @@ function printReadID(kmer_list, row) {
 		} else if (kmer_list.length == 2) {
 			kmer1 = kmer_list[0]
 			kmer2 = kmer_list[1]
-			filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-			filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
+			filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+			filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
 	
 			queue()
 				.defer(d3.csv, filename1)
@@ -504,9 +503,9 @@ function printReadID(kmer_list, row) {
 			kmer1 = kmer_list[0]
 			kmer2 = kmer_list[1]
 			kmer3 = kmer_list[2]
-			filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-			filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-			filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
+			filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+			filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+			filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
 	
 			queue()
 				.defer(d3.csv, filename1)
@@ -525,10 +524,10 @@ function printReadID(kmer_list, row) {
 			kmer2 = kmer_list[1]
 			kmer3 = kmer_list[2]
 			kmer4 = kmer_list[3]
-			filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-			filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-			filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
-			filename4 = './data/raw_signal/'+kmer4+'_signal.csv';
+			filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+			filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+			filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
+			filename4 = folder+'/raw_signal/'+kmer4+'_signal.csv';
 	
 			queue()
 				.defer(d3.csv, filename1)
@@ -563,7 +562,7 @@ var data_brush = []
 function add_signal_brush(row_list, kmer_list) {
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.await(add)
@@ -583,8 +582,8 @@ function add_signal_brush(row_list, kmer_list) {
 	} else if (kmer_list.length == 2) {
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -606,9 +605,9 @@ function add_signal_brush(row_list, kmer_list) {
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -632,10 +631,10 @@ function add_signal_brush(row_list, kmer_list) {
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
 		kmer4 = kmer_list[3]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
-		filename4 = './data/raw_signal/'+kmer4+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
+		filename4 = folder+'/raw_signal/'+kmer4+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -660,7 +659,7 @@ function add_signal_brush(row_list, kmer_list) {
 function add_signal(row, kmer_list){
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.await(add)
@@ -681,8 +680,8 @@ function add_signal(row, kmer_list){
 	} else if (kmer_list.length == 2) {
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -706,9 +705,9 @@ function add_signal(row, kmer_list){
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -733,10 +732,10 @@ function add_signal(row, kmer_list){
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
 		kmer4 = kmer_list[3]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
-		filename4 = './data/raw_signal/'+kmer4+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
+		filename4 = folder+'/raw_signal/'+kmer4+'_signal.csv';
 		queue()
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -763,7 +762,7 @@ var signalToAdd = null;
 function add_signal_hover(row, kmer_list){
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
 		queue()	
 			.defer(d3.csv, filename1)
 			.await(add)
@@ -783,8 +782,8 @@ function add_signal_hover(row, kmer_list){
 	}	else if (kmer_list.length == 2) {
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
 		queue()	
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -804,9 +803,9 @@ function add_signal_hover(row, kmer_list){
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
 		queue()	
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -829,10 +828,10 @@ function add_signal_hover(row, kmer_list){
 		kmer3 = kmer_list[2]
 		kmer4 = kmer_list[3]
 		
-		filename1 = './data/raw_signal/'+kmer1+'_signal.csv';
-		filename2 = './data/raw_signal/'+kmer2+'_signal.csv';
-		filename3 = './data/raw_signal/'+kmer3+'_signal.csv';
-		filename4 = './data/raw_signal/'+kmer4+'_signal.csv';
+		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
+		filename2 = folder+'/raw_signal/'+kmer2+'_signal.csv';
+		filename3 = folder+'/raw_signal/'+kmer3+'_signal.csv';
+		filename4 = folder+'/raw_signal/'+kmer4+'_signal.csv';
 		queue()	
 			.defer(d3.csv, filename1)
 			.defer(d3.csv, filename2)
@@ -1074,7 +1073,7 @@ function draw_boxplot(data, form_val) {
 function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 	viewport_kmers = kmerValues
 	d3.select('.viewport_selected').selectAll('*').remove()
-	d3.csv('./data/boxplot_data.csv', function(data) {
+	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		all_data = data
 		clicked_data = []
 		for (i=0;i<256;i++) {
@@ -1358,15 +1357,17 @@ function draw_signal(data_click,data_hover, data_brush) {
 							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
 							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 }
+
 function putNodeOnTop(node) {
    var n = jQuery(node);
    n.parent().append(n.detach());
 }
 putNodeOnTop(d3.select(".line_hover").node());
+
 function combine_1_kmer(kmer_list){
 		kmer1 = kmer_list[0]
 		
-		folder1 = './data/distance_matrices/'+kmer1
+		folder1 = folder+'/distance_matrices/'+kmer1
 		
 		queue()
 		.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer1 + '.csv')
@@ -1384,8 +1385,8 @@ function combine_1_kmer(kmer_list){
 function combine_2_kmers(kmer_list){
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
-		folder1 = './data/distance_matrices/'+kmer1
-		folder2 = './data/distance_matrices/'+kmer2
+		folder1 = folder+'/distance_matrices/'+kmer1
+		folder2 = folder+'/distance_matrices/'+kmer2
 		queue()
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer1 + '.csv')
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer2 + '.csv')
@@ -1415,9 +1416,9 @@ function combine_3_kmers(kmer_list){
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
-		folder1 = './data/distance_matrices/'+kmer1
-		folder2 = './data/distance_matrices/'+kmer2
-		folder3 = './data/distance_matrices/'+kmer3
+		folder1 = folder+'/distance_matrices/'+kmer1
+		folder2 = folder+'/distance_matrices/'+kmer2
+		folder3 = folder+'/distance_matrices/'+kmer3
 		queue()
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer1 + '.csv')
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer2 + '.csv')
@@ -1459,10 +1460,10 @@ function combine_4_kmers(kmer_list){
 		kmer2 = kmer_list[1]
 		kmer3 = kmer_list[2]
 		kmer4 = kmer_list[3]
-		folder1 = './data/distance_matrices/'+kmer1
-		folder2 = './data/distance_matrices/'+kmer2
-		folder3 = './data/distance_matrices/'+kmer3
-		folder4 = './data/distance_matrices/'+kmer4
+		folder1 = folder+'/distance_matrices/'+kmer1
+		folder2 = folder+'/distance_matrices/'+kmer2
+		folder3 = folder+'/distance_matrices/'+kmer3
+		folder4 = folder+'/distance_matrices/'+kmer4
 		queue()
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer1 + '.csv')
 			.defer(d3.csv, folder1 + '/' + kmer1 + '_' + kmer2 + '.csv')
