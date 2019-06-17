@@ -16,10 +16,11 @@
 						stroke: black; stroke-width: 3;
 				} 
 				.line_click {
-            stroke: brown; 
+            stroke: black; 
+						opacity : 0.5;
 				}
 				.line_brush {
-            stroke: brown;
+            stroke: black;
 						opacity : 0.5;
 				}  
 				.axis { 
@@ -68,7 +69,13 @@
             border-radius: 4px;
             box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
         }
-				
+
+				.viewport_selected_text {
+						position: absolute;
+						top: 310px;
+            left: 930px;
+				}
+
 				.viewport_selected {
             position: absolute;
             top: 350px;
@@ -81,9 +88,10 @@
             border-radius: 4px;
             box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
         }
-				.viewport_selected_text {
+				
+				.export_button {
 						position: absolute;
-						top: 300px;
+						top: 500px;
             left: 930px;
 				}
 				.tsne {
@@ -173,6 +181,9 @@
 <!--<div class = "clear_readID">
 	<button type ="button" onclick= "clear_ID()"> Clear Read ID</button>
 </div>-->
+<div class = "export_button">
+	<button onclick="download_csv()">Download CSV</button> (export selected points)
+</div>
 
 <script type="text/javascript">
 var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]
@@ -253,7 +264,7 @@ function handleType(event){
 		}
 		filtered_kmers = kmerValues.filter(matching)
 		
-    // exclude selected kmered from viewport after typeing
+    // exclude selected kmered from viewport after typing
 		for (i=0;i<kmer_list.length;i++){
 			index = filtered_kmers.indexOf(kmer_list[i])
 			filtered_kmers.splice(index, 1)
@@ -559,6 +570,7 @@ var data_click = []
 var data_hover = []
 var data_row = []
 var data_brush = []
+var data_export = []
 function add_signal_brush(row_list, kmer_list) {
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
@@ -669,10 +681,11 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-	
+						data_export.splice(index,1)
 				} else {
 						data_row.push(row)
-						data_click.push(d[row]['values'].split("_").map(Number))		
+						data_click.push(d[row]['values'].split("_").map(Number))
+						data_export.push(d[row])		
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -692,11 +705,12 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
+						data_export.splice(index,1)
 	
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))		
-	
+						data_export.push(d[row])
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -719,10 +733,11 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-	
+						data_export.splice(index,1)
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))		
+						data_export.push(d[row])
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -748,15 +763,17 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-	
+						data_export.splice(index,1)
 				} else {
 						data_row.push(row)
-						data_click.push(d[row]['values'].split("_").map(Number))		
+						data_click.push(d[row]['values'].split("_").map(Number))
+						data_export.push(d[row])		
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
 		}
 	}
+	
 }
 var signalToAdd = null;
 function add_signal_hover(row, kmer_list){
@@ -1264,8 +1281,34 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 		})
 	})
 }
+
+// a function to download a csv file, given an array of arrays (array_export)
+function download_csv() {
+							
+					    var csv = 'kmer,read_ID,values\n';
+					    array_export.forEach(function(row) {
+	    		        csv += row.join(',');
+	    		        csv += "\n";
+					    });
+
+ 							var hiddenElement = document.createElement('a');
+    					hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+    					hiddenElement.target = '_blank';
+    					hiddenElement.download = 'data.csv';
+    					hiddenElement.click();
+}		
+
+var array_export 
+
 // draw raw signals based on the data passed from add_signal
 function draw_signal(data_click,data_hover, data_brush) {
+				 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
+				 array_export = data_export.map(function(obj) {
+  					return Object.keys(obj).sort().map(function(key) { 
+    					return obj[key];
+  					});
+					});
+
 					var data = data_hover.concat(data_click).concat(data_brush)
 					
 					var m = [20, 40, 20, 90]; // margins
