@@ -410,11 +410,13 @@ function draw_tsne(position, kmer_list) {
 												}
 											}
 				})
+				
 				.on('click',function(d,i){
-												if (d3.select(this).attr("r") == "6") { 
-													d3.select(this).attr("r", "8");
+												if (d3.select(this).style("stroke") == "none") {
+													d3.select(this).style("stroke", "black");
+													d3.select(this).style("stroke-width", 2);
 												}	else {
-													d3.select(this).attr("r", "6");
+													d3.select(this).style("stroke", "none");
 												}
 												
 												add_signal(i, kmer_list);
@@ -429,9 +431,7 @@ function draw_tsne(position, kmer_list) {
 												d3.select(this).attr("r", "6");
 												remove_signal_hover();
 				})
-				.on('dblclick', function(d, i) {
-						printReadID(kmer_list, i)
-				})
+				
 		
 		function highlightBrushedCircles() {
         if (d3.event.selection != null) {
