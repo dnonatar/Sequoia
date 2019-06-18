@@ -291,7 +291,10 @@ function handleType(event){
 	
 var opt = {epsilon: 10}; // epsilon is learning rate (10 = default)
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+
+
 // draw t-sne
+
 function draw_tsne(position, kmer_list) {
 		
 		var width = 500;
@@ -344,7 +347,7 @@ function draw_tsne(position, kmer_list) {
 									//.extent([[0, 0], [100, 100]])
 									//.on("brush", highlightBrushedCircles)
 									//.on("end", endBrush)
-									.on("brush", whileBrush)
+									.on("brush", whileBrush);
 		d3.select('#tsne').append("g")
 				.call(brush)
 				.call(brush.move)
@@ -448,32 +451,51 @@ function draw_tsne(position, kmer_list) {
 					
          }
 		}
+
+		var lastBrushEvent = 0;
+
 		function whileBrush() {
-				// disregard brushes w/o selections
+				// disregard brushes w/o selections				
 				if (!d3.event.selection) return;
 				// programmed clearing of brush after mouse-up
 				//d3.select(this).call(brush.move, null);
 				
-				if (d3.event.selection != null) {
-           // revert circles to initial style
-           circles.attr("class", "non_brushed");
-           var brush_coords = d3.brushSelection(this);
-           // style brushed circles
-           circles.filter(function (){
-           						var cx = d3.select(this).attr("cx"),
-                          cy = d3.select(this).attr("cy");
-                      return isBrushed(brush_coords, cx, cy);
-                  })
-                  .attr("class", "brushed");
-					
-         }
-				//get indices for the brushed points
-        var d_brushed =  d3.selectAll(".brushed").data();			
-				var row_list = []				
-				if (d_brushed.length > 0 && row_list.length ==0) {
-            d_brushed.forEach(d_each => row_list.push(position.indexOf(d_each)))
-				} 
-				add_signal_brush(row_list, kmer_list)
+			if (d3.event.selection != null) 
+			{
+				// revert circles to initial style
+				circles.attr("class", "non_brushed");
+				var brush_coords = d3.brushSelection(this);
+				
+				// style brushed circles
+				circles.filter(function (){
+					var cx = d3.select(this).attr("cx"),
+					cy = d3.select(this).attr("cy");
+					return isBrushed(brush_coords, cx, cy);
+				})
+				.attr("class", "brushed");
+			}
+
+			// get indices for the brushed points
+			var d_brushed =  d3.selectAll(".brushed").data();			
+			var row_list = []				
+			if (d_brushed.length > 0 && row_list.length ==0) 
+			{
+				d_brushed.forEach(d_each => row_list.push(position.indexOf(d_each)))
+			}
+			
+			(function(row_list, kmer_list, brushEvent) {
+				setTimeout(function() 
+				{
+					if (brushEvent == lastBrushEvent) {
+						add_signal_brush(row_list, kmer_list)
+					}
+					else
+					{
+						console.log("SAVED loading");
+					}
+				}, 2);
+
+			})(row_list, kmer_list, ++lastBrushEvent)
 		}		
 }
 function printReadID(kmer_list, row) {
@@ -571,26 +593,48 @@ var data_hover = []
 var data_row = []
 var data_brush = []
 var data_export = []
-function add_signal_brush(row_list, kmer_list) {
+function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
 		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
-		queue()
-			.defer(d3.csv, filename1)
-			.await(add)
-	
-		function add(error, file1){
-				d = file1
-				if (data_brush.length >0){
-						data_brush.length = 0
-				}
-				for (i=0;i<row_list.length;i++){
-						row = row_list[i]
-						data_brush.push(d[row]['values'].split("_").map(Number))
-				}
-				
-				draw_signal(data_click, data_hover, data_brush)
-		}
+		
+		(function(row_list, filename1, currentBrushEvent) {
+
+			queue()
+				.defer(
+					d3.csv, filename1
+					/*
+					function(_callback) {
+						setTimeout(function() 
+						{
+							if (currentBrushEvent == lastBrushEvent) {
+								d3.csv(filename1, _callback); 
+							}
+							else
+							{
+								_callback(true);
+							}
+						}, 5);
+					}
+					*/
+				)
+				.await(add)
+		
+			function add(error, file1){
+					if (error) { console.log("SAVED loading"); return; }
+					d = file1
+					if (data_brush.length >0){
+							data_brush.length = 0
+					}
+					for (i=0;i<row_list.length;i++){
+							row = row_list[i]
+							data_brush.push(d[row]['values'].split("_").map(Number))
+					}
+					
+					draw_signal(data_click, data_hover, data_brush)
+			}
+		})(row_list, filename1, currentBrushEvent);
+
 	} else if (kmer_list.length == 2) {
 		kmer1 = kmer_list[0]
 		kmer2 = kmer_list[1]
