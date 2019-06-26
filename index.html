@@ -931,39 +931,41 @@ box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 12
 kmer_list = []
 function draw_boxplot(data, form_val) {
 		
-		if (form_val == 'median') {
-			data.forEach(function(data){ data['median']= +data['median'];});
-			
-				data.sort(function(a,b) {
-    			return b[form_val] - a[form_val];
-				});
-		}	else if (form_val == 'kmer') {
-			
-			data.sort(function(a,b) {
-    		var x = a[form_val].toLowerCase();
-    		var y = b[form_val].toLowerCase();
-    		return x < y ? -1 : x > y ? 1 : 0;
-			});
-		} else if (form_val == 'max') {
-			data.forEach(function(data){ data['median']= +data['median'];});
-			
-				data.sort(function(a,b) {
-    			return b[form_val] - a[form_val];
-				});
-		}
+	if (form_val == 'median') {
+		data.forEach(function(data){ data['median']= +data['median'];});
 		
-		var w = 350
-		var h = 7500*data.length /256
-		var margin = {
-    top: 20,
-    bottom: 20,
-    left: 20,
-    right: 30
+			data.sort(function(a,b) {
+			return b[form_val] - a[form_val];
+			});
+	}	else if (form_val == 'kmer') {
+		
+		data.sort(function(a,b) {
+		var x = a[form_val].toLowerCase();
+		var y = b[form_val].toLowerCase();
+		return x < y ? -1 : x > y ? 1 : 0;
+		});
+	} else if (form_val == 'max') {
+		data.forEach(function(data){ data['median']= +data['median'];});
+		
+			data.sort(function(a,b) {
+			return b[form_val] - a[form_val];
+			});
+	}
+		
+	var w = 350
+	var h = 7500*data.length /256
+	var margin = {
+	    top: 20,
+	    bottom: 20,
+	    left: 20,
+	    right: 30
   	}
+
 	d3.select('.viewport')
-    .append('svg')
-    .attr('height', h)
-    .attr('width', w)
+    	.append('svg')
+		    .attr('height', h)
+		    .attr('width', w)
+
 	var catVariable = 'order'
 	var catValues = data.map(d => Number(d[catVariable]))
 	var kmerValues = data.map(d => d['kmer'])
@@ -973,41 +975,26 @@ function draw_boxplot(data, form_val) {
     const q1Variable = 'q1'
     const q3Variable = 'q3'
 	var xScale = d3.scaleLinear()
-			.domain([0,8000])
-			.range([margin.left, w- margin.right-50])
-	/*var yScale = d3.scaleLinear()
-			.domain([
-				Number(d3.max(data, d => d[catVariable])) + 1,
-				Number(d3.min(data, d => d[catVariable])) - 1
-			])
-			.range([h - margin.bottom, margin.top])	
-  */
+		.domain([0,8000])
+		.range([margin.left, w- margin.right-50])
+	
 	
 	var yScale = d3.scalePoint()
 			.domain(kmerValues)
 			.range([margin.top,h - margin.bottom])
-	/*var xAxis = d3.axisBottom()
-								.scale(xScale)
-								.ticks(10)
-								.tickSize(-470) 
-				
-	d3.select('svg')
-		.append('g')
-		.attr('transform', 'translate(0,480)')
-		.attr('id', 'xAxisG')
-		.call(xAxis) */
+	
 	var yAxis = d3.axisRight()
-								.scale(yScale)
-								.tickSize(-470)
-    						//.tickValues(catValues)
-								//.tickValues(kmerValues)
+					.scale(yScale)
+					.tickSize(-470)
+				//.tickValues(catValues)
+					//.tickValues(kmerValues)
 								
 	
 	d3.select('svg')
 		.append('g')
-		.attr('transform', 'translate(300,0)')
-		.attr('id', 'yAxisG')
-		.call(yAxis)
+			.attr('transform', 'translate(300,0)')
+			.attr('id', 'yAxisG')
+			.call(yAxis)
 	d3.select('svg')
 		.selectAll('g.box')
 		.data(data)
@@ -1036,38 +1023,40 @@ function draw_boxplot(data, form_val) {
 						d3.select('#tsne').selectAll('circle').remove()	
 						loading_gif()
 						
-						if (d3.select(this).style("fill") ==	"white") {
+						
 							
-							d3.select(this).style("opacity",0.3)
-							d3.select(this).style("stroke",'none')
-							d3.select(this).style("fill",box_colors[box_colors.length-1])
-							tsne_colors.push(box_colors[box_colors.length-1])	
-							box_colors.pop()
-							
-							// remove selected boxplot from the current viewport
-							index = kmerValues.indexOf(d.kmer)
-							kmerValues.splice(index, 1)
-							filtered_data = []
-							for (i=0;i<data.length;i++) {
-								if(kmerValues.includes(data[i]['kmer']) ){
-									filtered_data.push(data[i])
-								}
+						d3.select(this).style("opacity",0.3)
+						d3.select(this).style("stroke",'none')
+						d3.select(this).style("fill",box_colors[box_colors.length-1])
+						tsne_colors.push(box_colors[box_colors.length-1])	
+						box_colors.pop()
+						
+						// remove selected boxplot from the current viewport
+						index = kmerValues.indexOf(d.kmer)
+						kmerValues.splice(index, 1)
+						filtered_data = []
+						for (i=0;i<data.length;i++) {
+							if(kmerValues.includes(data[i]['kmer']) ){
+								filtered_data.push(data[i])
 							}
-							var form = document.getElementById("sort")
-							var form_val;
-							for(var i=0; i<form.length; i++){
-		      	  				if(form[i].checked){
-		      	    				form_val = form[i].id;
-								}
-							}
+						}
 
-							d3.select(".viewport").selectAll("*").remove()
-							kmer_list.push(d.kmer)
-							draw_boxplot(filtered_data, form_val)						
-							draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
+						// get sorting option
+						var form = document.getElementById("sort")
+						var form_val;
+						for(var i=0; i<form.length; i++){
+	      	  				if(form[i].checked){
+	      	    				form_val = form[i].id;
+							}
+						}
+
+						d3.select(".viewport").selectAll("*").remove()
+						kmer_list.push(d.kmer)
+						draw_boxplot(filtered_data, form_val)						
+						draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
 							
 							
-						} 
+						 
 
 						if (kmer_list.length == 1) {
 								combine_1_kmer(kmer_list)
@@ -1083,6 +1072,17 @@ function draw_boxplot(data, form_val) {
 					}
 			
         		})
+				.on('mouseover', function(){
+					d3.select(this)
+						.style('fill', 'grey')
+				        .style('stroke', 'none')
+						.style('opacity', 0.4)
+				})
+				.on('mouseout', function(){
+					d3.select(this)
+						.style('opacity', 0)
+				})
+
 			d3.select(this)
 				.append('line')
 					.attr('class', 'range')
@@ -1253,15 +1253,8 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 		        .style('stroke-width', '1px')
 				.style('opacity', 0.3)
 				.on("click", function(d) {
-
-					console.log(box_colors)				
 					box_colors.push(d3.select(this).style("fill"))
 					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
-					console.log(box_colors)
-					console.log(tsne_colors)
-					console.log(d3.select(this).style("fill"))
-					console.log(tsne_colors.indexOf(d3.select(this)))
-
 					index = kmer_list.indexOf(d.kmer)
 					kmer_list.splice(index, 1)
 					kmerValues = viewport_kmers
