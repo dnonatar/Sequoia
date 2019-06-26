@@ -188,40 +188,74 @@
 </div>
 
 <div class = "normalize_checkbox">
-	<input type="checkbox" id="normalize_checkbox"> Make signal lengths equal
+	<input type="checkbox" id="normalize_checkbox"> Normalize signal lengths 
 <div>
 
 <script type="text/javascript">
 var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]
 var tsne_colors = []
-var folder = ''
+var folder = 'data'
+
 
 function reset() {
 	d3.select("").selectAll('*').remove()
 }
 
-function handleFolder(event){
-		folder = document.getElementById("folder").value
-		d3.select(".tsne").selectAll('.circle').remove()
+// On landing page, use 'data' as a default folder
+d3.csv('data'+'/boxplot_data.csv', function(data) {
+	//folder='data'
+	function changeBoxplot(){
 		d3.select(".viewport").selectAll("*").remove()
+		var form = document.getElementById("sort")
+		var form_val;
+		for(var i=0; i<form.length; i++){
+		  if(form[i].checked){
+		    form_val = form[i].id;}} 
+		
+		draw_boxplot(data, form_val)
+	}	
+	var dataSort = d3.select("#sort")
+	dataSort.on("change", changeBoxplot)
+	draw_boxplot(data, 'kmer')
+})
 
-		d3.csv(folder+'/boxplot_data.csv', function(data) {
-			function changeBoxplot(){
-				
-				var form = document.getElementById("sort")
-				var form_val;
-				for(var i=0; i<form.length; i++){
-      		  if(form[i].checked){
-      		    form_val = form[i].id;}} 
-				
-				draw_boxplot(data, form_val)
-			}	
-			var dataDim = d3.select("#sort")
-			dataDim.on("change", changeBoxplot)
-			draw_boxplot(data, 'kmer')
-		})
+// function to be called when a folder is chosen
+function handleFolder(event){
+	folder = document.getElementById("folder").value
+	d3.select(".tsne").selectAll('.circle').remove()
+	d3.select(".viewport").selectAll("*").remove()
 
-		return false;
+	d3.csv(folder+'/boxplot_data.csv', function(data) {
+		function changeBoxplot(){
+			d3.select(".viewport").selectAll("*").remove()
+			var form = document.getElementById("sort")
+			var form_val;
+			for(var i=0; i<form.length; i++){
+  		  		if(form[i].checked){
+  		    		form_val = form[i].id;
+  		    	}
+  			} 
+			
+			draw_boxplot(data, form_val)
+		}
+
+		// change sort type	
+		var dataSort = d3.select("#sort")
+		dataSort.on("change", changeBoxplot)
+
+		// get the sort type before plotting the boxplots
+		var form = document.getElementById("sort")
+		var form_val;
+		for(var i=0; i<form.length; i++){
+	  		if(form[i].checked){
+	    		form_val = form[i].id;
+	    	}
+		} 
+
+		draw_boxplot(data, form_val)
+	})
+
+	return false;
 }
 
 function handleType(event){
