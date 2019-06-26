@@ -10,116 +10,121 @@
 <style>
             /* tell the SVG path to be a thin blue line without any area fill */
 				path { 
-						stroke-width: 1; fill: none; 
+					stroke-width: 1; 
+					fill: none; 
 				} 
 				.line_hover { 
-						stroke: orange; stroke-width: 3;
+					stroke: yellow; 
+					stroke-width: 3;
+					opacity : 1;
 				} 
 				.line_click {
-            stroke: black; 
-						opacity : 0.5;
+        			stroke: black; 
+					opacity : 0.5;
 				}
 				.line_brush {
-            stroke: black;
-						opacity : 0.5;
+        			stroke: black;
+					opacity : 0.5;
 				}  
 				.axis { 
-						shape-rendering: crispEdges; 
+					shape-rendering: crispEdges; 
 				} 
 				.x.axis line {
-            stroke: lightgrey; 
+        			stroke: lightgrey; 
 				} .x.axis 
-				.minor { stroke-opacity: .5; 
+				.minor { 
+					stroke-opacity: .5; 
 				} 
-				.x.axis path
-            { display: black; 
+				.x.axis path { 
+					display: black; 
 				} 
-				.x.axis text { font-size: 14; 
+				.x.axis text { 
+					font-size: 14; 
 				} 
 				.y.axis line, .y.axis
-            path { fill: none; stroke: #000; } .y.axis text { font-size: 14; } .y.axisRight
-            text { fill: orange; } .y.axisLeft text { fill: steelblue; } 
+	            path { fill: none; stroke: #000; } .y.axis text { font-size: 14; } .y.axisRight
+	            text { fill: orange; } .y.axisLeft text { fill: steelblue; } 
 				
 				.kmer-filter {
-            position: absolute;
-            top: 70px;
-            left: 20px;
-         }
+		            position: absolute;
+		            top: 70px;
+		            left: 20px;
+         		}
 				.button {
-	            position: absolute;
-	            top: 45px;
-	            left: 20px;
-	      }
+		            position: absolute;
+		            top: 45px;
+		            left: 20px;
+	      		}
 
 				.choose-folder {
-	            position: absolute;
-	            top: 15px;
-	            left: 20px;
-	      }
+		            position: absolute;
+		            top: 15px;
+		            left: 20px;
+	     		}
 				
 				.viewport {
-            position: absolute;
-            top: 100px;
-            left: 15px;
-            overflow: auto;
-            width: 360px;
-            height: 550px;
-            background-color: #e8e8e8;
-            border: 1px solid #AAAAAA;
-            border-radius: 4px;
-            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
-        }
+		            position: absolute;
+		            top: 100px;
+		            left: 15px;
+		            overflow: auto;
+		            width: 360px;
+		            height: 550px;
+		            background-color: #e8e8e8;
+		            border: 1px solid #AAAAAA;
+		            border-radius: 4px;
+		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
+        		}
 
 				.viewport_selected_text {
-						position: absolute;
-						top: 310px;
-            left: 930px;
+					position: absolute;
+					top: 310px;
+        			left: 930px;
 				}
 
 				.viewport_selected {
-            position: absolute;
-            top: 350px;
-            left: 930px;
-            overflow: auto;
-            width: 360px;
-            height: 120px;
-            background-color: #e8e8e8;
-            border: 1px solid #AAAAAA;
-            border-radius: 4px;
-            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
-        }
+		            position: absolute;
+		            top: 350px;
+		            left: 930px;
+		            overflow: auto;
+		            width: 360px;
+		            height: 120px;
+		            background-color: #e8e8e8;
+		            border: 1px solid #AAAAAA;
+		            border-radius: 4px;
+		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
+			    }
 		
-			.normalize_checkbox {
-				position: absolute;
-				top: 500px;
-            	left: 930px;
-		}
+				.normalize_checkbox {
+					position: absolute;
+					top: 500px;
+	            	left: 930px;
+				}
 
-			.export_button {
-				position: absolute;
-				top: 550px;
-            	left: 930px;
-		}
+				.export_button {
+					position: absolute;
+					top: 550px;
+	            	left: 930px;
+				}
 
-			.reset_button {
-				position: absolute;
-				top: 600px;
-            	left: 930px;
-		}
+				.reset_button {
+					position: absolute;
+					top: 600px;
+		        	left: 930px;
+				}
 
 				.tsne {
-            position: absolute;
-            top: 270px;
-            left: 400px;
-            
-        }
+		            position: absolute;
+		            top: 270px;
+		            left: 400px;
+		            
+		        }
 				.raw_signal {
-            position: absolute;
-            top: 10px;
-            left: 400px;
-            width: 350px;
-            height: 200px;
-        }
+		            position: absolute;
+		            top: 10px;
+		            left: 400px;
+		            width: 350px;
+		            height: 200px;
+		        }
 				div.tooltip {	
     				position: absolute;			
     				text-align: center;			
@@ -133,11 +138,11 @@
     				pointer-events: none;			
 				}
 				.brushed {
-            opacity: 1.0;
-        }
-        .non_brushed {
-            opacity: 0.7;
-        }
+		            opacity: 1.0;
+		        }
+		        .non_brushed {
+		            opacity: 0.7;
+		        }
 				
 					
 </style>
@@ -192,7 +197,7 @@
 <div>
 
 <script type="text/javascript">
-var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]
+var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 127, 0)"]
 var tsne_colors = []
 var folder = 'data'
 
@@ -400,7 +405,8 @@ function draw_tsne(position, kmer_list) {
 		var yScale = d3.scaleLinear()
 				.domain(d3.extent(position, function(d) {return d[1]; }))
 				//.range([height - padding, padding])
-				.range([20, height-40])
+				//.range([20, height-40])
+				.range([height-40, 20])
 				.nice();
 
 		var x_axis = d3.axisBottom()
@@ -408,7 +414,7 @@ function draw_tsne(position, kmer_list) {
 
 		svg.append("g")
 			 	.attr("transform", "translate(0,360)")
-       	.call(x_axis);
+       			.call(x_axis);
 
 		svg.append("text")
 				.attr("transform", "translate(255,395)")
@@ -420,7 +426,7 @@ function draw_tsne(position, kmer_list) {
 
 		svg.append("g")
 			 	.attr("transform", "translate(40,0)")
-       	.call(y_axis);
+       			.call(y_axis);
 
 		svg.append("text")
 				.attr('transform', 'translate(15,190)rotate(-90)')
@@ -915,10 +921,12 @@ function remove_signal_hover(){
 	d3.selectAll('.line_hover').remove();
 	signalToAdd=null;
 }
+
 var div = d3.select("body").append("div")	
     .attr("class", "tooltip")				
     .style("opacity", 0);
-box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(178, 223, 138)","rgb(166, 206, 227)"]  //reset when changing sort type
+
+box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 127, 0)"]  //reset when changing sort type
 
 kmer_list = []
 function draw_boxplot(data, form_val) {
@@ -960,10 +968,10 @@ function draw_boxplot(data, form_val) {
 	var catValues = data.map(d => Number(d[catVariable]))
 	var kmerValues = data.map(d => d['kmer'])
 	const minVariable = 'min'
-  const maxVariable = 'max'
-  const medianVariable = 'median'
-  const q1Variable = 'q1'
-  const q3Variable = 'q3'
+    const maxVariable = 'max'
+    const medianVariable = 'median'
+    const q1Variable = 'q1'
+    const q3Variable = 'q3'
 	var xScale = d3.scaleLinear()
 			.domain([0,8000])
 			.range([margin.left, w- margin.right-50])
@@ -1012,23 +1020,24 @@ function draw_boxplot(data, form_val) {
 		
 		.each(function(d, i) {
 			d3.select(this)
-        .append('rect')
-        .attr('class', 'cover')
-        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
-        .attr('y', -10)
-        .attr('height', 20)
-        .attr('width', 480)
-        .style('fill', 'white')
-        .style('stroke', 'black')
-        .style('stroke-width', '1px')
+		        .append('rect')
+		        .attr('class', 'cover')
+		        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
+		        .attr('y', -10)
+		        .attr('height', 20)
+		        .attr('width', 480)
+		        .style('fill', 'white')
+		        .style('stroke', 'black')
+		        .style('stroke-width', '1px')
 				.style('opacity', 0)
-				.on("click", function(d) {				
+				.on("click", function(d) {
+					if(kmer_list.length <4) {				
 					
-					d3.select('#tsne').selectAll('circle').remove()	
-					loading_gif()
-					
-					if (d3.select(this).style("fill") ==	"white") {
-							kmer_list.push(d.kmer)
+						d3.select('#tsne').selectAll('circle').remove()	
+						loading_gif()
+						
+						if (d3.select(this).style("fill") ==	"white") {
+							
 							d3.select(this).style("opacity",0.3)
 							d3.select(this).style("stroke",'none')
 							d3.select(this).style("fill",box_colors[box_colors.length-1])
@@ -1041,20 +1050,25 @@ function draw_boxplot(data, form_val) {
 							filtered_data = []
 							for (i=0;i<data.length;i++) {
 								if(kmerValues.includes(data[i]['kmer']) ){
-								filtered_data.push(data[i])
+									filtered_data.push(data[i])
 								}
 							}
 							var form = document.getElementById("sort")
 							var form_val;
 							for(var i=0; i<form.length; i++){
-      	  			if(form[i].checked){
-      	    			form_val = form[i].id;
+		      	  				if(form[i].checked){
+		      	    				form_val = form[i].id;
 								}
-							} 
+							}
+
 							d3.select(".viewport").selectAll("*").remove()
+							kmer_list.push(d.kmer)
 							draw_boxplot(filtered_data, form_val)						
 							draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
-					} 
+							
+							
+						} 
+
 						if (kmer_list.length == 1) {
 								combine_1_kmer(kmer_list)
 						} else if (kmer_list.length == 2) {
@@ -1066,45 +1080,46 @@ function draw_boxplot(data, form_val) {
 						} else{
 								d3.select('#tsne').selectAll('circle').remove()
 						}
+					}
 			
-        })
+        		})
 			d3.select(this)
 				.append('line')
-				.attr('class', 'range')
-				.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-        .attr('y1', 0)
-        .attr('y2', 0)
-        .style('stroke', 'black')
-        .style('stroke-width', '3px')
+					.attr('class', 'range')
+					.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', 0)
+			        .attr('y2', 0)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
 			d3.select(this)
-        .append('line')
-        .attr('class', 'max')
-        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-        .attr('y1', -10)
-        .attr('y2', 10)
-        .style('stroke', 'black')
-        .style('stroke-width', '3px')			
+		        .append('line')
+			        .attr('class', 'max')
+			        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')			
 			d3.select(this)
 				.append('line')
-        .attr('class', 'min')
-        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
-        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-        .attr('y1', -10)
-        .attr('y2', 10)
-        .style('stroke', 'black')
-        .style('stroke-width', '3px')
+			        .attr('class', 'min')
+			        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
 			d3.select(this)
-        .append('rect')
-        .attr('class', 'range')
-        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
-        .attr('y', -10)
-        .attr('height', 20)
-        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
-        .style('fill', 'white')
-        .style('stroke', 'black')
-        .style('stroke-width', '3px')
+        		.append('rect')
+			        .attr('class', 'range')
+			        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
+			        .attr('y', -10)
+			        .attr('height', 20)
+			        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
+			        .style('fill', 'white')
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
 				.on("mouseover", function(d) {
             div.transition()		
                 .duration(200)		
@@ -1121,23 +1136,24 @@ function draw_boxplot(data, form_val) {
 				d3.select(this).style('fill', 'white')	
         })
 			d3.select(this)
-        .append('line')
-        .attr('x1', 0)
-        .attr('x2', 0)
-        .attr('y1', -10)
-        .attr('y2', 10)
-        .style('stroke', 'darkgray')
-        .style('stroke-width', '4px')
+		        .append('line')
+			        .attr('x1', 0)
+			        .attr('x2', 0)
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'darkgray')
+			        .style('stroke-width', '4px')
 		})
 }
 
 function loading_gif(){
-	d3.select("#tsne").append("svg:image")
-    .attr('x', 220)
-    .attr('y',130)
-    .attr('width', 100)
-    .attr('height', 140)
-    .attr("xlink:href", "./images/ajax-loader.gif")
+	d3.select("#tsne")
+		.append("svg:image")
+		    .attr('x', 220)
+		    .attr('y',130)
+		    .attr('width', 100)
+		    .attr('height', 140)
+		    .attr("xlink:href", "./images/ajax-loader.gif")
 }
 
 
@@ -1203,10 +1219,10 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 			.attr('id', 'xAxisG')
 			.call(xAxis) */
 		var yAxis = d3.axisRight()
-									.scale(yScale)
-									.tickSize(-470)
-	    						//.tickValues(catValues)
-									//.tickValues(kmerValues)
+						.scale(yScale)
+						.tickSize(-470)
+					//.tickValues(catValues)
+						//.tickValues(kmerValues)
 								
 	
 	d3.select('.viewport_selected').select('svg')
@@ -1226,120 +1242,128 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 		
 		.each(function(d, i) {
 			d3.select(this)
-        .append('rect')
-        //.attr('class', 'cover')
-        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
-        .attr('y', -10)
-        .attr('height', 20)
-        .attr('width', 480)
-        .style('fill', clicked_colors[i])
-        .style('stroke', 'none')
-        .style('stroke-width', '1px')
+		        .append('rect')
+		        //.attr('class', 'cover')
+		        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
+		        .attr('y', -10)
+		        .attr('height', 20)
+		        .attr('width', 480)
+		        .style('fill', clicked_colors[i])
+		        .style('stroke', 'none')
+		        .style('stroke-width', '1px')
 				.style('opacity', 0.3)
-				.on("click", function(d) {				
-							box_colors.push(d3.select(this).style("fill"))
-							tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
-							
-							index = kmer_list.indexOf(d.kmer)
-							kmer_list.splice(index, 1)
-							kmerValues = viewport_kmers
-							kmerValues.push(d.kmer)
-							draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
-							
-							filtered_data = []
-							for (i=0;i<all_data.length;i++) {
-								if(kmerValues.includes(all_data[i]['kmer']) ){
-								filtered_data.push(all_data[i])
-								}
-							}
-							
-							var form = document.getElementById("sort")
-							var form_val;
-							for(var i=0; i<form.length; i++){
-      	  			if(form[i].checked){
-      	    			form_val = form[i].id;
-								}
-							} 
-							d3.select(".viewport").selectAll("*").remove()
-							draw_boxplot(filtered_data, form_val)
+				.on("click", function(d) {
+
+					console.log(box_colors)				
+					box_colors.push(d3.select(this).style("fill"))
+					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
+					console.log(box_colors)
+					console.log(tsne_colors)
+					console.log(d3.select(this).style("fill"))
+					console.log(tsne_colors.indexOf(d3.select(this)))
+
+					index = kmer_list.indexOf(d.kmer)
+					kmer_list.splice(index, 1)
+					kmerValues = viewport_kmers
+					kmerValues.push(d.kmer)
+					draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
 					
-						if (kmer_list.length == 1) {
-								combine_1_kmer(kmer_list)
-						} else if (kmer_list.length == 2) {
-								combine_2_kmers(kmer_list)
-						} else if (kmer_list.length == 3) {
-								combine_3_kmers(kmer_list)
-						} else if (kmer_list.length == 4) {
-								combine_4_kmers(kmer_list)
-						} else{
-								d3.select('#tsne').selectAll('circle').remove()
+					filtered_data = []
+					for (i=0;i<all_data.length;i++) {
+						if(kmerValues.includes(all_data[i]['kmer']) ){
+							filtered_data.push(all_data[i])
 						}
+					}
+					
+					var form = document.getElementById("sort")
+					var form_val;
+					for(var i=0; i<form.length; i++){
+							if(form[i].checked){
+							form_val = form[i].id;
+						}
+					} 
+					d3.select(".viewport").selectAll("*").remove()
+					draw_boxplot(filtered_data, form_val)
+				
+					if (kmer_list.length == 1) {
+							combine_1_kmer(kmer_list)
+					} else if (kmer_list.length == 2) {
+							combine_2_kmers(kmer_list)
+					} else if (kmer_list.length == 3) {
+							combine_3_kmers(kmer_list)
+					} else if (kmer_list.length == 4) {
+							combine_4_kmers(kmer_list)
+					} else{
+							d3.select('#tsne').selectAll('circle').remove()
+					}
 			
-        		})
+				})
 
 			d3.select(this)
 				.append('line')
-				.attr('class', 'range')
-				.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-		        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-		        .attr('y1', 0)
-		        .attr('y2', 0)
-		        .style('stroke', 'black')
-		        .style('stroke-width', '3px')
+					.attr('class', 'range')
+					.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', 0)
+			        .attr('y2', 0)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
 
 			d3.select(this)
 		        .append('line')
-		        .attr('class', 'max')
-		        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-		        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-		        .attr('y1', -10)
-		        .attr('y2', 10)
-		        .style('stroke', 'black')
-		        .style('stroke-width', '3px')	
+			        .attr('class', 'max')
+			        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')	
 
 			d3.select(this)
 				.append('line')
-		        .attr('class', 'min')
-		        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
-		        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-		        .attr('y1', -10)
-		        .attr('y2', 10)
-		        .style('stroke', 'black')
-		        .style('stroke-width', '3px')
+			        .attr('class', 'min')
+			        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
 
 			d3.select(this)
 		        .append('rect')
-		        .attr('class', 'range')
-		        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
-		        .attr('y', -10)
-		        .attr('height', 20)
-		        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
-		        .style('fill', 'white')
-		        .style('stroke', 'black')
-		        .style('stroke-width', '3px')
-				.on("mouseover", function(d) {
-		            div.transition()		
-		                .duration(200)		
-		                .style("opacity", 1);		
-		            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
-		                .style("left", (d3.event.pageX) + "px")		
-		                .style("top", (d3.event.pageY - 28) + "px");
-								d3.select(this).style('fill', 'yellow')			
-     			})
-		.on("mouseout", function(d) {		
-            div.transition()		
-                .duration(500)		
-                .style("opacity", 0);
-				d3.select(this).style('fill', 'white')	
-        })
+			        .attr('class', 'range')
+			        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
+			        .attr('y', -10)
+			        .attr('height', 20)
+			        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
+			        .style('fill', 'white')
+			        .style('stroke', 'black')
+			        .style('stroke-width', '3px')
+					.on("mouseover", function(d) {
+			            div.transition()		
+			                .duration(200)		
+			                .style("opacity", 1);		
+			            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
+			                .style("left", (d3.event.pageX) + "px")		
+			                .style("top", (d3.event.pageY - 28) + "px");
+									d3.select(this).style('fill', 'yellow')			
+	     			})
+
+					.on("mouseout", function(d) {		
+			            div.transition()		
+			                .duration(500)		
+			                .style("opacity", 0);
+							d3.select(this).style('fill', 'white')	
+			        })
+
 			d3.select(this)
-	        .append('line')
-	        .attr('x1', 0)
-	        .attr('x2', 0)
-	        .attr('y1', -10)
-	        .attr('y2', 10)
-	        .style('stroke', 'darkgray')
-	        .style('stroke-width', '4px')
+		        .append('line')
+			        .attr('x1', 0)
+			        .attr('x2', 0)
+			        .attr('y1', -10)
+			        .attr('y2', 10)
+			        .style('stroke', 'darkgray')
+			        .style('stroke-width', '4px')
 		})
 	})
 }
