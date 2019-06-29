@@ -5,6 +5,7 @@ import sys
 import pandas as pd
 import numpy as np
 from dtaidistance import dtw
+import itertools
 
 ## input data (first commandline argument)
 input_directory = str(sys.argv[1])
@@ -15,6 +16,17 @@ penalty = int(sys.argv[2])
 
 ## output folder
 out_folder = str(sys.argv[3])
+
+
+## For storing boxplots data
+median_dist = []
+min_dist = []
+max_dist = []
+q1_dist = []
+q3_dist = []
+## For storing violin plot data
+mean_dist_all = []
+
 
 ## calculating distance matrices for t-SNE
 series_data = []
@@ -34,9 +46,22 @@ os.makedirs(out_folder+'/distance_matrices/')
 os.makedirs(out_folder+'/raw_signal/')
 for kmer_row in data_all['kmer'].unique():
     for kmer_column in data_all['kmer'].unique():
+				
         current_ds = ds.loc[kmer_row, kmer_column]
         current_ds.columns = range(0,len(current_ds))
-        outdir = out_folder+'/distance_matrices/'+ kmer_row + '/'					## output location for distance matrices
+
+        if kmer_row == kmer_column:
+            y = current_ds.mean(axis = 1)
+            median_dist.append(np.median(y))
+            min_dist.append(np.min(y))
+            max_dist.append(np.max(y))
+            q1_dist.append(np.percentile(y,25))
+            q3_dist.append(np.percentile(y,75))
+            mean_dist_all.append(y)		
+						
+				
+		## output location for distance matrices
+        outdir = out_folder+'/distance_matrices/'+ kmer_row + '/'					
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         filename = kmer_row + '_' + kmer_column + '.csv'
@@ -44,28 +69,11 @@ for kmer_row in data_all['kmer'].unique():
         
         current_ds.to_csv(fullname, index=False)
 
-## computing boxplots data
-median_dist = []
-min_dist = []
-max_dist = []
-q1_dist = []
-q3_dist = []
-
-for kmer in data_all['kmer'].unique():
-    data = data_all.loc[data_all['kmer']==kmer]
-    series_data = []
-    for i in data.index:
-        val = map(int,data.loc[i,'values'].split("_"))
-        series_data.append(np.array(list(val), dtype=np.double))
-    # DTW computation
-    ds = dtw.distance_matrix_fast(series_data,show_progress=True,penalty=penalty)
-    y = ds[np.triu_indices(ds.shape[0],k=1)]
-    
-    median_dist.append(np.median(y))
-    min_dist.append(np.min(y))
-    max_dist.append(np.max(y))
-    q1_dist.append(np.percentile(y,25))
-    q3_dist.append(np.percentile(y,75))
+## creating a dataset for violinplot
+mean_dist_all = list(itertools.chain.from_iterable(mean_dist_all))  ## combine list of lists into one list
+violin_dict = dict([('kmer',list(data_all.kmer)), ('ave_distance',mean_dist_all)])
+violin_df = pd.DataFrame.from_dict(violin_dict)
+violin_df.to_csv(out_folder+'/violin_data.csv', index=False)   ## output directory for violinplot data
 
 
 ## creating a dataset for boxplot
