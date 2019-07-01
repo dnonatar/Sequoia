@@ -57,6 +57,12 @@
 		            left: 20px;
 	      		}
 
+	      		.plot_type {
+		            position: absolute;
+		            top: 45px;
+		            left: 300px;
+	      		}
+
 				.choose-folder {
 		            position: absolute;
 		            top: 15px;
@@ -69,7 +75,7 @@
 		            left: 15px;
 		            overflow: auto;
 		            width: 360px;
-		            height: 550px;
+		            height: 400px;
 		            background-color: #e8e8e8;
 		            border: 1px solid #AAAAAA;
 		            border-radius: 4px;
@@ -78,14 +84,14 @@
 
 				.viewport_selected_text {
 					position: absolute;
-					top: 310px;
-        			left: 930px;
+					top: 500px;
+        			left: 15px;
 				}
 
 				.viewport_selected {
 		            position: absolute;
-		            top: 350px;
-		            left: 930px;
+		            top: 540px;
+		            left: 15px;
 		            overflow: auto;
 		            width: 360px;
 		            height: 120px;
@@ -152,25 +158,32 @@
 <body style='font-family="sans-serif"'>
 <div class = "button">
 	<form id="sort">
-	<div> Sort by
-		<input type='radio' id="kmer" name="mode" checked>k-mer</input> 
-		<input  type='radio' id="median" name="mode">median</input>
-		<input  type='radio' id="max" name="mode">max</input>
-  </div>
+		<div> Sort by
+			<input type='radio' id="kmer" name="mode" checked>k-mer</input> 
+			<input  type='radio' id="median" name="mode">median</input>
+			<input  type='radio' id="max" name="mode">max</input>
+	  	</div>
 	</form>
 </div>
 
+<div class = "plot_type">
+	<select id="plot_type">
+		<option value="box" selected="selected">Box Plot</option>
+		<option value="violin">Violin Plot</option>
+	</select>
+</div>
+
 <div class = "kmer-filter">
-		<form name="myform" onkeyup="return handleType()">k-mer filtering  
-	    <input type="text" id="myVal1" placeholder="Partial or Full k-mer">
-		</form>
+	<form name="myform" onkeyup="return handleType()">k-mer filtering  
+    	<input type="text" id="myVal1" placeholder="Partial or Full k-mer">
+	</form>
 </div>
 
 <div class = "choose-folder">
-		<form name="myform" onSubmit="return handleFolder()">
-			<input name="Submit"  type="submit" value="Choose" >
-	    <input type="text" id="folder" placeholder="Type Input Folder">
-		</form>
+	<form name="myform" onSubmit="return handleFolder()">
+		<input name="Submit"  type="submit" value="Choose" >
+    	<input type="text" id="folder" placeholder="Type Input Folder">
+	</form>
 </div>
 
 <div class = "viewport"></div>
@@ -220,10 +233,124 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 		
 		draw_boxplot(data, form_val)
 	}	
+
 	var dataSort = d3.select("#sort")
 	dataSort.on("change", changeBoxplot)
 	draw_boxplot(data, 'kmer')
+
+	d3.select(".plot_type").on("change",function(){
+		
+		var sect = document.getElementById("plot_type");
+		var section = sect.options[sect.selectedIndex].value;
+		
+		if (section == 'violin') {
+			draw_violin();
+		} else {
+			changeBoxplot();			
+		}
+	})
+
 })
+
+
+
+
+
+function draw_violin() {
+	d3.select(".viewport").selectAll("*").remove()
+	d3.csv('./data/violin_data.csv', function(data) {
+
+		// set the dimensions and margins of the graph
+		var margin = {top: 35, right: 30, bottom: 30, left: 50},
+		    width = 360 - margin.left - margin.right,
+		    height = 8400 - margin.top - margin.bottom;
+
+		// append the svg object to the body of the page
+		var svg = d3.select(".viewport")
+		  .append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform",
+		          "translate(" + margin.left + "," + margin.top + ")");
+
+		// Read the data and compute summary statistics for each specie
+		d3.csv('./data/violin_data.csv', function(data) {
+		  var kmerValues = data.map(d => d['kmer'])
+		  // Build and Show the Y scale
+		  var x = d3.scaleLinear()
+		    .domain([ 0,2500 ])          // Note that here the Y scale is set manually
+		    .range([0, width])
+		  svg.append("g")
+		  	.attr("transform", "translate(" + 0 +","+0+ ")")
+		  	.call( d3.axisTop(x) )
+		        .selectAll('text')
+		          .style("text-anchor", "start")
+		          .attr("transform", "translate(16,-7)rotate(-90)");
+
+		  // Build and Show the X scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. This range has a length of x.bandwidth
+		  var y = d3.scaleBand()
+		    .range([ 0, height ])
+		    .domain(kmerValues)
+		    .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+		  svg.append("g")
+		    .attr("transform", "translate(" + 0 +","+0+ ")")
+		    .call(d3.axisLeft(y))
+
+		  // Features of the histogram
+		  var histogram = d3.histogram()
+		        .domain(x.domain())
+		        .thresholds(x.ticks(20))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+		        .value(d => d)
+
+		  // Compute the binning for each group of the dataset
+		  var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
+		    .key(function(d) { return d.kmer;})
+		    .rollup(function(d) {   // For each key..
+		      input = d.map(function(g) { return g.ave_distance;})    // Keep the variable called Sepal_Length
+		      bins = histogram(input)   // And compute the binning on it.
+		      return(bins)
+		    })
+		    .entries(data)
+
+		  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
+		  var maxNum = 0
+		  for ( i in sumstat ){
+		    allBins = sumstat[i].value
+		    lengths = allBins.map(function(a){return a.length;})
+		    longest = d3.max(lengths)
+		    if (longest > maxNum) { maxNum = longest }
+		  }
+
+		  // The maximum width of a violin must be x.bandwidth = the width dedicated to a group
+		  var yNum = d3.scaleLinear()
+		    .range([0, y.bandwidth()])
+		    .domain([-maxNum,maxNum])
+
+		  // Add the shape to this svg!
+		  svg
+		    .selectAll("myViolin")
+		    .data(sumstat)
+		    .enter()        // So now we are working group per group
+		    .append("g")
+		      .attr("transform", function(d){ return("translate(0," + y(d.key) +")") } ) // Translation vertically to be at the group position
+		    .append("path")
+		        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+		        .style("stroke", "none")
+		        .style("fill","#69b3a2")
+		        .attr("d", d3.area()
+		            .y0(function(d){ return(yNum(-d.length)) } )
+		            .y1(function(d){ return(yNum(d.length)) } )
+		            .x(function(d){ return(x(d.x0)) } )
+		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+		            
+		        )
+		        //.on("mouseover", function(d){console.log("ac")})
+
+			
+		})
+	})
+}
 
 // function to be called when a folder is chosen
 function handleFolder(event){
@@ -933,24 +1060,23 @@ kmer_list = []
 function draw_boxplot(data, form_val) {
 		
 	if (form_val == 'median') {
-		data.forEach(function(data){ data['median']= +data['median'];});
-		
-			data.sort(function(a,b) {
+		//data.forEach(function(data){ data['median']= +data['median'];});
+		data.sort(function(a,b) {
 			return b[form_val] - a[form_val];
-			});
-	}	else if (form_val == 'kmer') {
+		});
+
+	} else if (form_val == 'kmer') {
 		
 		data.sort(function(a,b) {
-		var x = a[form_val].toLowerCase();
-		var y = b[form_val].toLowerCase();
-		return x < y ? -1 : x > y ? 1 : 0;
+			var x = a[form_val].toLowerCase();
+			var y = b[form_val].toLowerCase();
+			return x < y ? -1 : x > y ? 1 : 0;
 		});
 	} else if (form_val == 'max') {
-		data.forEach(function(data){ data['median']= +data['median'];});
-		
-			data.sort(function(a,b) {
+		//data.forEach(function(data){ data['median']= +data['median'];});
+		data.sort(function(a,b) {
 			return b[form_val] - a[form_val];
-			});
+		});
 	}
 		
 	var w = 350
@@ -1055,9 +1181,6 @@ function draw_boxplot(data, form_val) {
 						draw_boxplot(filtered_data, form_val)						
 						draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
 							
-							
-						 
-
 						if (kmer_list.length == 1) {
 								combine_1_kmer(kmer_list)
 						} else if (kmer_list.length == 2) {
@@ -1097,8 +1220,8 @@ function draw_boxplot(data, form_val) {
 			        .attr('class', 'max')
 			        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
 			        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-			        .attr('y1', -10)
-			        .attr('y2', 10)
+			        .attr('y1', -8)
+			        .attr('y2', 8)
 			        .style('stroke', 'black')
 			        .style('stroke-width', '2px')			
 			d3.select(this)
@@ -1106,16 +1229,16 @@ function draw_boxplot(data, form_val) {
 			        .attr('class', 'min')
 			        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
 			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-			        .attr('y1', -10)
-			        .attr('y2', 10)
+			        .attr('y1', -8)
+			        .attr('y2', 8)
 			        .style('stroke', 'black')
 			        .style('stroke-width', '2px')
 			d3.select(this)
         		.append('rect')
 			        .attr('class', 'range')
 			        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
-			        .attr('y', -10)
-			        .attr('height', 20)
+			        .attr('y', -8)
+			        .attr('height', 16)
 			        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
 			        .style('fill', 'white')
 			        .style('stroke', 'black')
@@ -1133,15 +1256,15 @@ function draw_boxplot(data, form_val) {
             div.transition()		
                 .duration(500)		
                 .style("opacity", 0);
-				d3.select(this).style('fill', 'white')	
+			d3.select(this).style('fill', 'white')	
         })
 			d3.select(this)
 		        .append('line')
 			        .attr('x1', 0)
 			        .attr('x2', 0)
-			        .attr('y1', -10)
-			        .attr('y2', 10)
-			        .style('stroke', 'darkgray')
+			        .attr('y1', -8)
+			        .attr('y2', 8)
+			        .style('stroke', '#852121')
 			        .style('stroke-width', '4px')
 		})
 }
