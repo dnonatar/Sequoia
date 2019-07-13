@@ -235,7 +235,18 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 	}	
 
 	var dataSort = d3.select("#sort")
-	dataSort.on("change", changeBoxplot)
+	dataSort.on("change", function(){
+		var sect = document.getElementById("plot_type");
+		var section = sect.options[sect.selectedIndex].value;
+
+		if (section == 'violin') {
+			draw_violin();
+		} else {
+			changeBoxplot();			
+		}
+
+	})
+
 	draw_boxplot(data, 'kmer')
 
 	d3.select(".plot_type").on("change",function(){
@@ -253,15 +264,44 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 })
 
 
-
-
-
 function draw_violin() {
 	d3.select(".viewport").selectAll("*").remove()
-	d3.csv('./data/violin_data.csv', function(data) {
+	file1 = './'+folder+'/boxplot_data.csv'
+	file2 = './'+folder+'/violin_data.csv'
+	queue()
+		.defer(d3.csv, file1)
+		.defer(d3.csv, file2)
+		.await(get_violin)
+
+	function get_violin(error, file1, file2) {
+		box_data = file1
+		violin_data = file2
+	//d3.csv('./'+folder+'/violin_data.csv', function(data) {
+		var form = document.getElementById("sort")
+		var form_val;
+
+		for(var i=0; i<form.length; i++){
+		  if(form[i].checked){
+		    form_val = form[i].id;}} 
+
+		if (form_val == 'median') {
+		violin_data.sort(function(a,b) {
+			return b[form_val] - a[form_val];
+		});
+		} else if (form_val == 'kmer') {
+			violin_data.sort(function(a,b) {
+				var x = a[form_val].toLowerCase();
+				var y = b[form_val].toLowerCase();
+				return x < y ? -1 : x > y ? 1 : 0;
+			});
+		} else if (form_val == 'max') {
+			violin_data.sort(function(a,b) {
+				return b[form_val] - a[form_val];
+			});
+		}
 
 		// set the dimensions and margins of the graph
-		var margin = {top: 35, right: 30, bottom: 30, left: 50},
+		var margin = {top: 35, right: 20, bottom: 30, left: 60},
 		    width = 360 - margin.left - margin.right,
 		    height = 8400 - margin.top - margin.bottom;
 
@@ -274,26 +314,27 @@ function draw_violin() {
 		    .attr("transform",
 		          "translate(" + margin.left + "," + margin.top + ")");
 
-		// Read the data and compute summary statistics for each specie
-		d3.csv('./data/violin_data.csv', function(data) {
-		  var kmerValues = data.map(d => d['kmer'])
-		  // Build and Show the Y scale
+		// Read the data and compute summary statistics for each species
+		
+		  var kmerValues = violin_data.map(d => d['kmer'])
+		  // Build and Show the x scale
 		  var x = d3.scaleLinear()
-		    .domain([ 0,2500 ])          // Note that here the Y scale is set manually
+		    .domain([ 0,2500 ])          
 		    .range([0, width])
 		  svg.append("g")
 		  	.attr("transform", "translate(" + 0 +","+0+ ")")
 		  	.call( d3.axisTop(x) )
 		        .selectAll('text')
 		          .style("text-anchor", "start")
-		          .attr("transform", "translate(16,-7)rotate(-90)");
+		          .attr("transform", "translate(12,-7)rotate(-90)");
 
-		  // Build and Show the X scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. This range has a length of x.bandwidth
+		  // Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. 
 		  var y = d3.scaleBand()
+		  	.domain(kmerValues)
 		    .range([ 0, height ])
-		    .domain(kmerValues)
-		    .padding(0.05)     // This is important: it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
 		  svg.append("g")
+		  	 .style("font", "14px times")
 		    .attr("transform", "translate(" + 0 +","+0+ ")")
 		    .call(d3.axisLeft(y))
 
@@ -307,11 +348,13 @@ function draw_violin() {
 		  var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
 		    .key(function(d) { return d.kmer;})
 		    .rollup(function(d) {   // For each key..
-		      input = d.map(function(g) { return g.ave_distance;})    // Keep the variable called Sepal_Length
+		      input = d.map(function(g) { return g.ave_distance;})    // Keep the variable called ave_distance     
 		      bins = histogram(input)   // And compute the binning on it.
 		      return(bins)
 		    })
-		    .entries(data)
+		    .entries(violin_data)
+
+		  console.log(sumstat)  
 
 		  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
 		  var maxNum = 0
@@ -322,22 +365,26 @@ function draw_violin() {
 		    if (longest > maxNum) { maxNum = longest }
 		  }
 
-		  // The maximum width of a violin must be x.bandwidth = the width dedicated to a group
+		  // The maximum width of a violin must be y.bandwidth = the width dedicated to a group
 		  var yNum = d3.scaleLinear()
+		  	.domain([-maxNum,maxNum])
 		    .range([0, y.bandwidth()])
-		    .domain([-maxNum,maxNum])
+		    
 
 		  // Add the shape to this svg!
-		  svg
-		    .selectAll("myViolin")
+		  violins = svg.selectAll("myViolin")
+
+		  
 		    .data(sumstat)
 		    .enter()        // So now we are working group per group
 		    .append("g")
 		      .attr("transform", function(d){ return("translate(0," + y(d.key) +")") } ) // Translation vertically to be at the group position
-		    .append("path")
+		    
+		    violins.append("path")
 		        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
 		        .style("stroke", "none")
-		        .style("fill","#69b3a2")
+		        .style("fill","#240acc")
+		        .style("opacity",0.5)
 		        .attr("d", d3.area()
 		            .y0(function(d){ return(yNum(-d.length)) } )
 		            .y1(function(d){ return(yNum(d.length)) } )
@@ -345,12 +392,335 @@ function draw_violin() {
 		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
 		            
 		        )
-		        //.on("mouseover", function(d){console.log("ac")})
+		        
+
+		    violins.append('rect')
+		        .attr('class', 'cover')
+		        .attr('x', -60)
+		        .attr('y', 0)
+		        .attr('height', 30)
+		        .attr('width', 480)
+		        .style('fill', 'white')
+		        .style('stroke', 'black')
+		        .style('stroke-width', '1px')
+				.style('opacity', 0)
+				.on("click", function(d) {
+					if(kmer_list.length < 4) {				
+					
+						d3.select('#tsne').selectAll('circle').remove()	
+						loading_gif()
+						
+						d3.select(this).style("opacity",0.3)
+						d3.select(this).style("stroke",'none')
+						d3.select(this).style("fill",box_colors[box_colors.length-1])
+						tsne_colors.push(box_colors[box_colors.length-1])	
+						box_colors.pop()
+						
+						// remove selected boxplot from the current viewport
+						index = kmerValues.indexOf(d.kmer)
+						kmerValues.splice(index, 1)
+						/*
+						filtered_data = []
+						for (i=0;i<data.length;i++) {
+							if(kmerValues.includes(data[i]['kmer']) ){
+								filtered_data.push(data[i])
+							}
+						}
+						*/
+
+						// get sorting option
+						var form = document.getElementById("sort")
+						var form_val;
+						for(var i=0; i<form.length; i++){
+	      	  				if(form[i].checked){
+	      	    				form_val = form[i].id;
+							}
+						}
+
+						kmer_list.push(d.key)
+						draw_clicked_violin(kmer_list)
+						
+						// draw tsne	
+						if (kmer_list.length == 1) {
+								combine_1_kmer(kmer_list)
+						} else if (kmer_list.length == 2) {
+								combine_2_kmers(kmer_list)
+						} else if (kmer_list.length == 3) {
+								combine_3_kmers(kmer_list)
+						} else if (kmer_list.length == 4) {
+								combine_4_kmers(kmer_list)
+						} else{
+								d3.select('#tsne').selectAll('circle').remove()
+						}
+					
+					//keep previous color and opacity to be used on mouseout
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
+					}
+        		})
+
+        		
+				.on('mouseover', function(){
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
+					d3.select(this)
+						.style('fill', 'grey')
+				        .style('stroke', 'none')
+						.style('opacity', 0.4)
+				})
+				.on('mouseout', function(){
+					d3.select(this)
+						.style('fill', previous_color)
+						.style('opacity', previous_opacity)
+				})
+
+			//violins.exit().remove()
+
+			/*
+			var boxData = d3.nest()
+			  .key(function(d) { return d.kmer; })
+			  .rollup(function(v) {return {
+			  	median : d3.mean(v, function(d) { return d.median; }),
+			  	max : d3.mean(v, function(d) { return d.max; })
+
+			  }; })
+			  .entries(violin_data)
+			console.log(boxData)
+			
+			d3.select('.viewport').select('svg').select('g').selectAll('circle')
+				.data(boxData)
+				.enter()
+				.append("g")
+		      	.attr("transform", function(d){ return("translate(0," + y(d.key) + ")") } )
+				.append('circle')
+				.datum(function(d){ return(d.value)})
+				.attr('cx', function(d){ return x(d.median)})
+				.attr('r', 4)
+				.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+				.style('fill', 'white')
+			*/
+
+			mybox = d3.select('.viewport').select('svg').select('g')
+
+			mybox.selectAll('circle')
+				.data(box_data)
+				.enter()
+				.append('g')
+				.attr('class','violin_median')
+				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
+				.append('circle')
+				.attr('cx', function(d){ return x(d.median)})
+				.attr('r', 4)
+				.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+				.style('fill', 'white')
+			
+			mybox.selectAll('.violin_median').select('rect')
+				.data(box_data)
+				.enter()
+				.append('g')
+				.attr('class','violin_box')
+				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
+				.append('rect')
+				.attr('x', function(d){return x(d.q1)})
+				.attr('y', 10)
+				.attr('width', function(d) {return (x(d.q3) - x(d.q1)) } )
+				.attr('height', 10)
+				.style('fill', 'black')
+				.style('opacity', 0.3)
+	//})
+	}
+}
+
+
+function draw_clicked_violin(clicked_kmers) {
+	d3.select('.viewport_selected').selectAll('*').remove()
+	file1 = './'+folder+'/boxplot_data.csv'
+	file2 = './'+folder+'/violin_data.csv'
+	queue()
+		.defer(d3.csv, file1)
+		.defer(d3.csv, file2)
+		.await(get_violin)
+
+	function get_violin(error, file1, file2) {
+		box_data = file1
+		violin_data = file2
+		
+		clicked_violin = []
+		clicked_box = []
+		for (i=0;i<violin_data.length;i++) {
+			if(clicked_kmers.includes(violin_data[i]['kmer']) ){
+				clicked_violin.push(violin_data[i])
+			}
+		}
+
+		for (i=0;i<box_data.length;i++) {
+			if(clicked_kmers.includes(box_data[i]['kmer']) ){
+				clicked_box.push(box_data[i])
+			}
+		}
+
+		violin_data = clicked_violin
+		box_data = clicked_box
+		kmerValues = clicked_kmers
+
+		console.log(violin_data)
+		console.log(kmerValues)
+		// set the dimensions and margins of the graph
+		var margin = {top: 35, right: 20, bottom: 30, left: 60},
+		    width = 360 - margin.left - margin.right,
+		    height = 200 - margin.top - margin.bottom;
+
+		// append the svg object to the body of the page
+		var svg = d3.select(".viewport_selected")
+		  .append("svg")
+		    .attr("width", width + margin.left + margin.right)
+		    .attr("height", height + margin.top + margin.bottom)
+		  .append("g")
+		    .attr("transform",
+		          "translate(" + margin.left + "," + margin.top + ")");
+
+		// Read the data and compute summary statistics for each species
+		
+		  var kmerValues = violin_data.map(d => d['kmer'])
+		  // Build and Show the x scale
+		  var x = d3.scaleLinear()
+		    .domain([ 0,2500 ])          
+		    .range([0, width])
+		  /*  
+		  svg.append("g")
+		  	.attr("transform", "translate(" + 0 +","+0+ ")")
+		  	.call( d3.axisTop(x) )
+		        .selectAll('text')
+		          .style("text-anchor", "start")
+		          .attr("transform", "translate(12,-7)rotate(-90)");
+		  */
+
+		  // Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. 
+		  var y = d3.scaleBand()
+		  	.domain(kmerValues)
+		    .range([ 0, height ])
+		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+		  svg.append("g")
+		  	 .style("font", "14px times")
+		    .attr("transform", "translate(" + 0 +","+0+ ")")
+		    .call(d3.axisLeft(y))
+
+		  // Features of the histogram
+		  var histogram = d3.histogram()
+		        .domain(x.domain())
+		        .thresholds(x.ticks(20))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+		        .value(d => d)
+
+		  // Compute the binning for each group of the dataset
+		  var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
+		    .key(function(d) { return d.kmer;})
+		    .rollup(function(d) {   // For each key..
+		      input = d.map(function(g) { return g.ave_distance;})    // Keep the variable called ave_distance     
+		      bins = histogram(input)   // And compute the binning on it.
+		      return(bins)
+		    })
+		    .entries(violin_data)
+
+		  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
+		  var maxNum = 0
+		  for ( i in sumstat ){
+		    allBins = sumstat[i].value
+		    lengths = allBins.map(function(a){return a.length;})
+		    longest = d3.max(lengths)
+		    if (longest > maxNum) { maxNum = longest }
+		  }
+
+		  // The maximum width of a violin must be y.bandwidth = the width dedicated to a group
+		  var yNum = d3.scaleLinear()
+		  	.domain([-maxNum,maxNum])
+		    .range([0, y.bandwidth()])
+		    
+
+		  // Add the shape to this svg!
+		  violins = svg.selectAll("myViolin")
+
+		  
+		    .data(sumstat)
+		    .enter()        // So now we are working group per group
+		    .append("g")
+		      .attr("transform", function(d){ return("translate(0," + y(d.key) +")") } ) // Translation vertically to be at the group position
+		    
+		    violins.append("path")
+		        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+		        .style("stroke", "none")
+		        .style("fill","#240acc")
+		        .style("opacity",0.5)
+		        .attr("d", d3.area()
+		            .y0(function(d){ return(yNum(-d.length)) } )
+		            .y1(function(d){ return(yNum(d.length)) } )
+		            .x(function(d){ return(x(d.x0)) } )
+		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+		            
+		        )
+		        
+
+		    violins.append('rect')
+		        .attr('class', 'cover')
+		        .attr('x', -60)
+		        .attr('y', 0)
+		        .attr('height', 30)
+		        .attr('width', 480)
+		        .style('fill', 'white')
+		        .style('stroke', 'black')
+		        .style('stroke-width', '1px')
+				.style('opacity', 0)
+				
+
+        		
+				.on('mouseover', function(){
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
+					d3.select(this)
+						.style('fill', 'grey')
+				        .style('stroke', 'none')
+						.style('opacity', 0.4)
+				})
+				.on('mouseout', function(){
+					d3.select(this)
+						.style('fill', previous_color)
+						.style('opacity', previous_opacity)
+				})
 
 			
-		})
-	})
+			/*
+			mybox = d3.select('.viewport_selected').select('svg').select('g')
+
+			mybox.selectAll('circle')
+				.data(box_data)
+				.enter()
+				.append('g')
+				.attr('class','violin_median')
+				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
+				.append('circle')
+				.attr('cx', function(d){ return x(d.median)})
+				.attr('r', 4)
+				.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+				.style('fill', 'white')
+			*/
+			/*
+			mybox.selectAll('.violin_median').select('rect')
+				.data(box_data)
+				.enter()
+				.append('g')
+				.attr('class','violin_box')
+				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
+				.append('rect')
+				.attr('x', function(d){return x(d.q1)})
+				.attr('y', 10)
+				.attr('width', function(d) {return (x(d.q3) - x(d.q1)) } )
+				.attr('height', 10)
+				.style('fill', 'black')
+				.style('opacity', 0.3)
+			*/	
+	
+	}
 }
+
 
 // function to be called when a folder is chosen
 function handleFolder(event){
@@ -374,8 +744,17 @@ function handleFolder(event){
 
 		// change sort type	
 		var dataSort = d3.select("#sort")
-		dataSort.on("change", changeBoxplot)
+		dataSort.on("change", function(){
+		var sect = document.getElementById("plot_type");
+		var section = sect.options[sect.selectedIndex].value;
 
+		if (section == 'violin') {
+			draw_violin();
+		} else {
+			changeBoxplot();			
+		}
+
+	})
 		// get the sort type before plotting the boxplots
 		var form = document.getElementById("sort")
 		var form_val;
@@ -1060,20 +1439,16 @@ kmer_list = []
 function draw_boxplot(data, form_val) {
 		
 	if (form_val == 'median') {
-		//data.forEach(function(data){ data['median']= +data['median'];});
 		data.sort(function(a,b) {
 			return b[form_val] - a[form_val];
 		});
-
 	} else if (form_val == 'kmer') {
-		
 		data.sort(function(a,b) {
 			var x = a[form_val].toLowerCase();
 			var y = b[form_val].toLowerCase();
 			return x < y ? -1 : x > y ? 1 : 0;
 		});
 	} else if (form_val == 'max') {
-		//data.forEach(function(data){ data['median']= +data['median'];});
 		data.sort(function(a,b) {
 			return b[form_val] - a[form_val];
 		});
@@ -1092,6 +1467,8 @@ function draw_boxplot(data, form_val) {
     	.append('svg')
 		    .attr('height', h)
 		    .attr('width', w)
+		    //.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
 
 	var catVariable = 'order'
 	var catValues = data.map(d => Number(d[catVariable]))
@@ -1101,6 +1478,7 @@ function draw_boxplot(data, form_val) {
     const medianVariable = 'median'
     const q1Variable = 'q1'
     const q3Variable = 'q3'
+
 	var xScale = d3.scaleLinear()
 		.domain([0,8000])
 		.range([margin.left, w- margin.right-50])
@@ -1112,16 +1490,20 @@ function draw_boxplot(data, form_val) {
 	
 	var yAxis = d3.axisRight()
 					.scale(yScale)
-					.tickSize(-5)
+					.tickSize(0)
+
 				//.tickValues(catValues)
 					//.tickValues(kmerValues)
 								
-	
 	d3.select('svg')
 		.append('g')
-			.attr('transform', 'translate(300,0)')
+			.style("font", "14px times")
+			.attr('transform', 'translate(0,0)')
 			.attr('id', 'yAxisG')
 			.call(yAxis)
+
+	var previous_color = null
+    var previous_opacity = null
 
 	d3.select('svg')
 		.selectAll('g.box')
@@ -1130,23 +1512,24 @@ function draw_boxplot(data, form_val) {
 		.append('g')
 		.attr('class', 'box')
 		.attr(
-			'transform', d => `translate(${xScale(d[medianVariable])},${yScale(d['kmer'])})`
+		//	'transform', d => `translate(${xScale(d[medianVariable])},${yScale(d['kmer'])})`
+			'transform', d => `translate(${100},${yScale(d['kmer'])})`
 		)
 		
 		.each(function(d, i) {
 			d3.select(this)
 		        .append('rect')
 		        .attr('class', 'cover')
-		        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
-		        .attr('y', -10)
-		        .attr('height', 20)
+		        .attr('x', -100)
+		        .attr('y', -15)
+		        .attr('height', 30)
 		        .attr('width', 480)
 		        .style('fill', 'white')
 		        .style('stroke', 'black')
 		        .style('stroke-width', '1px')
 				.style('opacity', 0)
 				.on("click", function(d) {
-					if(kmer_list.length <4) {				
+					if(kmer_list.length < 4) {				
 					
 						d3.select('#tsne').selectAll('circle').remove()	
 						loading_gif()
@@ -1160,12 +1543,14 @@ function draw_boxplot(data, form_val) {
 						// remove selected boxplot from the current viewport
 						index = kmerValues.indexOf(d.kmer)
 						kmerValues.splice(index, 1)
+						/*
 						filtered_data = []
 						for (i=0;i<data.length;i++) {
 							if(kmerValues.includes(data[i]['kmer']) ){
 								filtered_data.push(data[i])
 							}
 						}
+						*/
 
 						// get sorting option
 						var form = document.getElementById("sort")
@@ -1176,9 +1561,9 @@ function draw_boxplot(data, form_val) {
 							}
 						}
 
-						d3.select(".viewport").selectAll("*").remove()
+						//d3.select(".viewport").selectAll("*").remove()
 						kmer_list.push(d.kmer)
-						draw_boxplot(filtered_data, form_val)						
+						//draw_boxplot(filtered_data, form_val)						
 						draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
 							
 						if (kmer_list.length == 1) {
@@ -1192,10 +1577,16 @@ function draw_boxplot(data, form_val) {
 						} else{
 								d3.select('#tsne').selectAll('circle').remove()
 						}
+					
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
 					}
-			
         		})
+
+        		
 				.on('mouseover', function(){
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
 					d3.select(this)
 						.style('fill', 'grey')
 				        .style('stroke', 'none')
@@ -1203,7 +1594,8 @@ function draw_boxplot(data, form_val) {
 				})
 				.on('mouseout', function(){
 					d3.select(this)
-						.style('opacity', 0)
+						.style('fill', previous_color)
+						.style('opacity', previous_opacity)
 				})
 
 			d3.select(this)
@@ -1283,6 +1675,8 @@ function loading_gif(){
 // for selected kmers
 function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 	viewport_kmers = kmerValues
+	console.log(clicked_kmers)
+	console.log(kmerValues)
 	d3.select('.viewport_selected').selectAll('*').remove()
 	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		all_data = data
