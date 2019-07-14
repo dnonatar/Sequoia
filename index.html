@@ -15,7 +15,7 @@
 					fill: none; 
 				} 
 				.line_hover { 
-					stroke: yellow; 
+					stroke: #ff0000; 
 					stroke-width: 3;
 					opacity : 1;
 				} 
@@ -438,7 +438,7 @@ function draw_violin() {
 						}
 
 						kmer_list.push(d.key)
-						draw_clicked_violin(kmer_list)
+						draw_clicked_violin(kmer_list, tsne_colors)
 						
 						// draw tsne	
 						if (kmer_list.length == 1) {
@@ -510,29 +510,17 @@ function draw_violin() {
 				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
 				.append('circle')
 				.attr('cx', function(d){ return x(d.median)})
-				.attr('r', 4)
+				.attr('r', 3)
 				.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
 				.style('fill', 'white')
 			
-			mybox.selectAll('.violin_median').select('rect')
-				.data(box_data)
-				.enter()
-				.append('g')
-				.attr('class','violin_box')
-				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
-				.append('rect')
-				.attr('x', function(d){return x(d.q1)})
-				.attr('y', 10)
-				.attr('width', function(d) {return (x(d.q3) - x(d.q1)) } )
-				.attr('height', 10)
-				.style('fill', 'black')
-				.style('opacity', 0.3)
+			
 	//})
 	}
 }
 
 
-function draw_clicked_violin(clicked_kmers) {
+function draw_clicked_violin(clicked_kmers, colors) {
 	d3.select('.viewport_selected').selectAll('*').remove()
 	file1 = './'+folder+'/boxplot_data.csv'
 	file2 = './'+folder+'/violin_data.csv'
@@ -560,21 +548,19 @@ function draw_clicked_violin(clicked_kmers) {
 		}
 
 		violin_data = clicked_violin
-		box_data = clicked_box
+		box_data = clicked_box    // need this to get the median
 		kmerValues = clicked_kmers
 
-		console.log(violin_data)
-		console.log(kmerValues)
 		// set the dimensions and margins of the graph
-		var margin = {top: 35, right: 20, bottom: 30, left: 60},
+		var margin = {top: 10, right: 20, bottom: 30, left: 60},
 		    width = 360 - margin.left - margin.right,
-		    height = 200 - margin.top - margin.bottom;
+		    height = 280 
 
 		// append the svg object to the body of the page
 		var svg = d3.select(".viewport_selected")
 		  .append("svg")
 		    .attr("width", width + margin.left + margin.right)
-		    .attr("height", height + margin.top + margin.bottom)
+		    .attr("height", height )
 		  .append("g")
 		    .attr("transform",
 		          "translate(" + margin.left + "," + margin.top + ")");
@@ -594,11 +580,11 @@ function draw_clicked_violin(clicked_kmers) {
 		          .style("text-anchor", "start")
 		          .attr("transform", "translate(12,-7)rotate(-90)");
 		  */
-
+		  
 		  // Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. 
 		  var y = d3.scaleBand()
 		  	.domain(kmerValues)
-		    .range([ 0, height ])
+		    .range([ 0, height/4*clicked_kmers.length ])
 		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
 		  svg.append("g")
 		  	 .style("font", "14px times")
@@ -633,7 +619,7 @@ function draw_clicked_violin(clicked_kmers) {
 		  // The maximum width of a violin must be y.bandwidth = the width dedicated to a group
 		  var yNum = d3.scaleLinear()
 		  	.domain([-maxNum,maxNum])
-		    .range([0, y.bandwidth()])
+		    .range([0, 60])
 		    
 
 		  // Add the shape to this svg!
@@ -649,12 +635,12 @@ function draw_clicked_violin(clicked_kmers) {
 		        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
 		        .style("stroke", "none")
 		        .style("fill","#240acc")
-		        .style("opacity",0.5)
+		        .style("opacity",0.7)
 		        .attr("d", d3.area()
 		            .y0(function(d){ return(yNum(-d.length)) } )
 		            .y1(function(d){ return(yNum(d.length)) } )
 		            .x(function(d){ return(x(d.x0)) } )
-		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. 
 		            
 		        )
 		        
@@ -663,12 +649,12 @@ function draw_clicked_violin(clicked_kmers) {
 		        .attr('class', 'cover')
 		        .attr('x', -60)
 		        .attr('y', 0)
-		        .attr('height', 30)
+		        .attr('height', 60)
 		        .attr('width', 480)
-		        .style('fill', 'white')
-		        .style('stroke', 'black')
+		        .style('fill', function(d,i) {return colors[i]} )
+		        .style('stroke', 'none')
 		        .style('stroke-width', '1px')
-				.style('opacity', 0)
+				.style('opacity', 0.5)
 				
 
         		
@@ -1016,7 +1002,7 @@ function draw_tsne(position, kmer_list) {
 				.on('mouseover', function(d,i){
 					old_color = d3.select(this).style("fill")
 					d3.select(this).attr("r", "10");
-					d3.select(this).style("fill", "yellow")
+					d3.select(this).style("fill", "#ff0000")
 					add_signal_hover(i, kmer_list);
 				})
 				.on('mouseout', function(d,i){
@@ -1508,7 +1494,7 @@ function draw_boxplot(data, form_val) {
 	d3.select('svg')
 		.selectAll('g.box')
 		.data(data)
-		.enter()
+		.enter()		
 		.append('g')
 		.attr('class', 'box')
 		.attr(
@@ -1642,7 +1628,7 @@ function draw_boxplot(data, form_val) {
             div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
                 .style("left", (d3.event.pageX) + "px")		
                 .style("top", (d3.event.pageY - 28) + "px");
-						d3.select(this).style('fill', 'yellow')			
+						d3.select(this).style('fill', '#ff0000')			
      				})
 		.on("mouseout", function(d) {		
             div.transition()		
@@ -1856,7 +1842,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 			            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
 			                .style("left", (d3.event.pageX) + "px")		
 			                .style("top", (d3.event.pageY - 28) + "px");
-									d3.select(this).style('fill', 'yellow')			
+									d3.select(this).style('fill', '#ff0000')			
 	     			})
 
 					.on("mouseout", function(d) {		
