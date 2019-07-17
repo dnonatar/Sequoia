@@ -1506,6 +1506,7 @@ function draw_boxplot(data, form_val) {
 			d3.select(this)
 		        .append('rect')
 		        .attr('class', 'cover')
+		        .attr('id', d['kmer']+'_box')
 		        .attr('x', -100)
 		        .attr('y', -15)
 		        .attr('height', 30)
@@ -1515,6 +1516,7 @@ function draw_boxplot(data, form_val) {
 		        .style('stroke-width', '1px')
 				.style('opacity', 0)
 				.on("click", function(d) {
+					
 					if(kmer_list.length < 4) {				
 					
 						d3.select('#tsne').selectAll('circle').remove()	
@@ -1550,7 +1552,7 @@ function draw_boxplot(data, form_val) {
 						//d3.select(".viewport").selectAll("*").remove()
 						kmer_list.push(d.kmer)
 						//draw_boxplot(filtered_data, form_val)						
-						draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
+						draw_clicked_boxplot(kmer_list, tsne_colors)
 							
 						if (kmer_list.length == 1) {
 								combine_1_kmer(kmer_list)
@@ -1659,10 +1661,8 @@ function loading_gif(){
 
 
 // for selected kmers
-function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
-	viewport_kmers = kmerValues
-	console.log(clicked_kmers)
-	console.log(kmerValues)
+function draw_clicked_boxplot(clicked_kmers, clicked_colors){
+	
 	d3.select('.viewport_selected').selectAll('*').remove()
 	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		all_data = data
@@ -1760,27 +1760,16 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors, kmerValues){
 					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
 					index = kmer_list.indexOf(d.kmer)
 					kmer_list.splice(index, 1)
-					kmerValues = viewport_kmers
-					kmerValues.push(d.kmer)
-					draw_clicked_boxplot(kmer_list, tsne_colors, kmerValues)
+
+					// remove color from the all-kmer panel
+					clicked_id = d.kmer+'_box'
+					d3.select('#'+clicked_id).style('fill','white')
+					d3.select('#'+clicked_id).style('opacity',0)
 					
-					filtered_data = []
-					for (i=0;i<all_data.length;i++) {
-						if(kmerValues.includes(all_data[i]['kmer']) ){
-							filtered_data.push(all_data[i])
-						}
-					}
+					// redraw clicked boxplot
+					draw_clicked_boxplot(kmer_list, tsne_colors)
 					
-					var form = document.getElementById("sort")
-					var form_val;
-					for(var i=0; i<form.length; i++){
-							if(form[i].checked){
-							form_val = form[i].id;
-						}
-					} 
-					d3.select(".viewport").selectAll("*").remove()
-					draw_boxplot(filtered_data, form_val)
-				
+					// redraw t-SNE
 					if (kmer_list.length == 1) {
 							combine_1_kmer(kmer_list)
 					} else if (kmer_list.length == 2) {
