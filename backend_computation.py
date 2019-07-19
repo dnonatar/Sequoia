@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import h5py
 import os
 import sys
 import pandas as pd
@@ -8,14 +9,68 @@ from dtaidistance import dtw
 import itertools
 
 ## input data (first commandline argument)
-input_directory = str(sys.argv[1])
-data_all = pd.read_csv(input_directory,header=0)
+input_file_name = sys.argv[1]
+#data_all = pd.read_csv(input_directory,header=0)
 
 ## penalty
 penalty = int(sys.argv[2])
 
 ## output folder
 out_folder = str(sys.argv[3])
+
+############## Process fast5 file
+hf = h5py.File(input_file_name, 'r')
+
+
+# hf.keys() will have the respective folders: [u'Analyses', u'PreviousReadInfo', u'Raw', u'UniqueGlobalKey']
+# read id extraction
+read_id = list(hf['/Raw/Reads/'].keys())[0]   ## Use list() for python 3
+
+## extracting signal values
+# signal location in fast5: '/Raw/Reads/Read_746'
+# adding read id to the path
+signal_path = '/Raw/Reads/' + read_id + '/Signal'
+# index and signal
+signal_array = list(hf.get(signal_path))
+# events location in the fast5: '/Analyses/Basecall_1D_001/BaseCalled_template/Events/'
+# Columns in events index: object 2: start, 4: 5mer, 5: move value
+events_table = hf.get('/Analyses/Basecall_1D_001/BaseCalled_template/Events/')
+kmer_signal_index_array = []
+move_val = 0
+combo_str = ''
+
+for line in events_table[()]:
+    ele = str(line).split(", ")
+    move_val = int(ele[5])
+    if move_val != 0:
+        kmer = (ele[4]).replace('\'', '')[1:6]
+        start = int(ele[2])
+        # extract start and stop into an array
+        combo_str = combo_str + str(start-1)      # this will introduce a -1 in the first line of the array
+        kmer_signal_index_array.append(combo_str)
+        # print combo_str
+        combo_str = (kmer + "\t" + str(start) + "\t")
+        
+readID_list = []
+kmer_list = []
+signal_list = []
+
+# extracting signal based on the start and stop
+for coordinates in kmer_signal_index_array[1:]:
+    ele2 = coordinates.split("\t")
+    kmer = ele2[0]
+    start = int(ele2[1])
+    stop = int(ele2[2])
+    signal_values = "_".join(map(str, signal_array[start:stop+1]))
+    readID_list.append(read_id)
+    kmer_list.append(kmer)
+    signal_list.append(signal_values)
+    
+data_dict = {'read_ID':readID_list, 'kmer':kmer_list, 'values': signal_list}
+data_all = pd.DataFrame(data=data_dict)
+data_all = data_all.sort_values(by=['kmer'])
+
+###############
 
 
 ## For storing boxplots data
@@ -47,8 +102,8 @@ os.makedirs(out_folder+'/raw_signal/')
 for kmer_row in data_all['kmer'].unique():
     for kmer_column in data_all['kmer'].unique():
 				
-        current_ds = ds.loc[kmer_row, kmer_column]
-        current_ds.columns = range(0,len(current_ds))
+        current_ds = ds.loc[[kmer_row], [kmer_column]]
+        current_ds.columns = range(0,len(current_ds.columns))
 
         if kmer_row == kmer_column:
             y = current_ds.mean(axis = 1)
@@ -59,7 +114,6 @@ for kmer_row in data_all['kmer'].unique():
             q3_dist.append(np.percentile(y,75))
             mean_dist_all.append(y)		
 						
-				
 		## output location for distance matrices
         outdir = out_folder+'/distance_matrices/'+ kmer_row + '/'					
         if not os.path.exists(outdir):
