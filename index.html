@@ -159,9 +159,9 @@
 <div class = "button">
 	<form id="sort">
 		<div> Sort by
-			<input type='radio' id="kmer" name="mode" checked>k-mer</input> 
-			<input  type='radio' id="median" name="mode">median</input>
-			<input  type='radio' id="max" name="mode">max</input>
+			<input type='radio' id="sort_kmer" name="mode" checked>k-mer</input> 
+			<input  type='radio' id="sort_median" name="mode">median</input>
+			<input  type='radio' id="sort_max" name="mode">max</input>
 	  	</div>
 	</form>
 </div>
@@ -276,7 +276,9 @@ function draw_violin() {
 	function get_violin(error, file1, file2) {
 		box_data = file1
 		violin_data = file2
-	//d3.csv('./'+folder+'/violin_data.csv', function(data) {
+		
+		
+		//get sorting option
 		var form = document.getElementById("sort")
 		var form_val;
 
@@ -284,21 +286,33 @@ function draw_violin() {
 		  if(form[i].checked){
 		    form_val = form[i].id;}} 
 
-		if (form_val == 'median') {
-		violin_data.sort(function(a,b) {
-			return b[form_val] - a[form_val];
-		});
-		} else if (form_val == 'kmer') {
+		if (form_val == 'sort_median') {
 			violin_data.sort(function(a,b) {
-				var x = a[form_val].toLowerCase();
-				var y = b[form_val].toLowerCase();
+				return b['median'] - a['median'];
+			});
+			box_data.sort(function(a,b) {
+				return b['median'] - a['median'];
+			});
+		} else if (form_val == 'sort_kmer') {
+			violin_data.sort(function(a,b) {
+				var x = a['kmer'].toLowerCase();
+				var y = b['kmer'].toLowerCase();
 				return x < y ? -1 : x > y ? 1 : 0;
 			});
-		} else if (form_val == 'max') {
+			box_data.sort(function(a,b) {
+				var x = a['kmer'].toLowerCase();
+				var y = b['kmer'].toLowerCase();
+				return x < y ? -1 : x > y ? 1 : 0;
+			});
+		} else if (form_val == 'sort_max') {
 			violin_data.sort(function(a,b) {
-				return b[form_val] - a[form_val];
+				return b['max'] - a['max'];
+			});
+			box_data.sort(function(a,b) {
+				return b['max'] - a['max'];
 			});
 		}
+		
 
 		// set the dimensions and margins of the graph
 		var margin = {top: 35, right: 20, bottom: 30, left: 60},
@@ -354,7 +368,16 @@ function draw_violin() {
 		    })
 		    .entries(violin_data)
 
-		  console.log(sumstat)  
+
+		   // Attach median and max values to sumstat 
+		   for (i =0; i < box_data.length; i++) {
+		   		sumstat[i]['median'] = box_data[i]['median']
+		   		sumstat[i]['max'] = box_data[i]['max']		
+		   }
+		   
+		   console.log(violin_data)
+		   console.log(sumstat)
+		   console.log(box_data)
 
 		  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
 		  var maxNum = 0
@@ -374,7 +397,6 @@ function draw_violin() {
 		  // Add the shape to this svg!
 		  violins = svg.selectAll("myViolin")
 
-		  
 		    .data(sumstat)
 		    .enter()        // So now we are working group per group
 		    .append("g")
@@ -396,6 +418,7 @@ function draw_violin() {
 
 		    violins.append('rect')
 		        .attr('class', 'cover')
+		        .attr('id', function(d){return (d.key +'_violin')})
 		        .attr('x', -60)
 		        .attr('y', 0)
 		        .attr('height', 30)
@@ -405,7 +428,7 @@ function draw_violin() {
 		        .style('stroke-width', '1px')
 				.style('opacity', 0)
 				.on("click", function(d) {
-					if(kmer_list.length < 4) {				
+					if(kmer_list.length < 4 && kmer_list.includes(d.key)==false) {				
 					
 						d3.select('#tsne').selectAll('circle').remove()	
 						loading_gif()
@@ -428,6 +451,7 @@ function draw_violin() {
 						}
 						*/
 
+						/*
 						// get sorting option
 						var form = document.getElementById("sort")
 						var form_val;
@@ -436,10 +460,11 @@ function draw_violin() {
 	      	    				form_val = form[i].id;
 							}
 						}
-
+						*/
 						kmer_list.push(d.key)
 						draw_clicked_violin(kmer_list, tsne_colors)
 						
+
 						// draw tsne	
 						if (kmer_list.length == 1) {
 								combine_1_kmer(kmer_list)
@@ -474,7 +499,17 @@ function draw_violin() {
 						.style('opacity', previous_opacity)
 				})
 
-			//violins.exit().remove()
+			/*
+			d3.select("#sort_median")
+				.on("click", function() {
+					violins.sort(function(a,b) {
+						return d3.descending(Number(a.median),Number(b.median))
+					})
+					.attr("transform", function(d){ return("translate(0," + y(d.key) +")") } )
+
+					
+				})	
+			*/
 
 			/*
 			var boxData = d3.nest()
@@ -515,12 +550,13 @@ function draw_violin() {
 				.style('fill', 'white')
 			
 			
-	//})
+	
 	}
 }
 
 
 function draw_clicked_violin(clicked_kmers, colors) {
+	
 	d3.select('.viewport_selected').selectAll('*').remove()
 	file1 = './'+folder+'/boxplot_data.csv'
 	file2 = './'+folder+'/violin_data.csv'
@@ -624,8 +660,6 @@ function draw_clicked_violin(clicked_kmers, colors) {
 
 		  // Add the shape to this svg!
 		  violins = svg.selectAll("myViolin")
-
-		  
 		    .data(sumstat)
 		    .enter()        // So now we are working group per group
 		    .append("g")
@@ -656,8 +690,36 @@ function draw_clicked_violin(clicked_kmers, colors) {
 		        .style('stroke-width', '1px')
 				.style('opacity', 0.5)
 				
+        		.on("click", function(d) {
+					box_colors.push(d3.select(this).style("fill"))
+					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
+					index = kmer_list.indexOf(d.key)
+					kmer_list.splice(index, 1)
+					
+					// remove color from the all-kmer panel
+					clicked_id = d.key+'_violin'
+					d3.select('#'+clicked_id).style('fill','white')
+					d3.select('#'+clicked_id).style('opacity',0)
+					
+					// redraw clicked violin
+					draw_clicked_violin(kmer_list, tsne_colors)
+					
+					// redraw t-SNE
+					if (kmer_list.length == 1) {
+							combine_1_kmer(kmer_list)
+					} else if (kmer_list.length == 2) {
+							combine_2_kmers(kmer_list)
+					} else if (kmer_list.length == 3) {
+							combine_3_kmers(kmer_list)
+					} else if (kmer_list.length == 4) {
+							combine_4_kmers(kmer_list)
+					} else{
+							d3.select('#tsne').selectAll('circle').remove()
+					}
+			
+				})
 
-        		
+        		/*
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
@@ -671,7 +733,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 						.style('fill', previous_color)
 						.style('opacity', previous_opacity)
 				})
-
+				*/
 			
 			/*
 			mybox = d3.select('.viewport_selected').select('svg').select('g')
@@ -726,6 +788,7 @@ function handleFolder(event){
   			} 
 			
 			draw_boxplot(data, form_val)
+
 		}
 
 		// change sort type	
@@ -737,7 +800,7 @@ function handleFolder(event){
 		if (section == 'violin') {
 			draw_violin();
 		} else {
-			changeBoxplot();			
+			changeBoxplot();
 		}
 
 	})
@@ -803,18 +866,22 @@ function handleType(event){
 		}
 		filtered_kmers = kmerValues.filter(matching)
 		
-    // exclude selected kmered from viewport after typing
+		/*
+    	// exclude selected kmered from viewport after typing
 		for (i=0;i<kmer_list.length;i++){
 			index = filtered_kmers.indexOf(kmer_list[i])
 			filtered_kmers.splice(index, 1)
-			console.log(index)
 		}
+		*/
+
 		filtered_data = []
 		for (i=0;i<256;i++) {
 			if(filtered_kmers.includes(data[i]['kmer']) ){
 				filtered_data.push(data[i])
 			}
 		}
+
+
 		var form = document.getElementById("sort")
 			var form_val;
 			for(var i=0; i<form.length; i++){
@@ -822,13 +889,23 @@ function handleType(event){
       	    form_val = form[i].id;}} 
 		d3.select(".viewport").selectAll("*").remove()
 		draw_boxplot(filtered_data, form_val)
+
+		for (i = 0; i<kmer_list.length; i++) {
+			d3.select('#'+kmer_list[i]+'_box').style('fill', tsne_colors[i])
+			d3.select('#'+kmer_list[i]+'_box').style('opacity', 0.3)
+			d3.select('#'+kmer_list[i]+'_box').style('stroke', 'none')
+
+		}
+		
 	})
 	
 	// return false prevents the page from reloading after submitting		
 	return false;
 }
 	
-var opt = {epsilon: 10}; // epsilon is learning rate (10 = default)
+var opt = {} // epsilon is learning rate (10 = default)
+opt.epsilon = 10;
+opt.perplexity = 50;
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
 
@@ -927,10 +1004,10 @@ function draw_tsne(position, kmer_list) {
 				.text("t-SNE 2")
 
 		var brush = d3.brush()
-									//.extent([[0, 0], [100, 100]])
-									//.on("brush", highlightBrushedCircles)
-									//.on("end", endBrush)
-									.on("brush", whileBrush);
+					//.extent([[0, 0], [100, 100]])
+					//.on("brush", highlightBrushedCircles)
+					//.on("end", endBrush)
+					.on("brush", whileBrush);
 		d3.select('#tsne').append("g")
 				.call(brush)
 				.call(brush.move)
@@ -1424,19 +1501,19 @@ box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 12
 kmer_list = []
 function draw_boxplot(data, form_val) {
 		
-	if (form_val == 'median') {
+	if (form_val == 'sort_median') {
 		data.sort(function(a,b) {
-			return b[form_val] - a[form_val];
+			return b['median'] - a['median'];
 		});
-	} else if (form_val == 'kmer') {
+	} else if (form_val == 'sort_kmer') {
 		data.sort(function(a,b) {
-			var x = a[form_val].toLowerCase();
-			var y = b[form_val].toLowerCase();
+			var x = a['kmer'].toLowerCase();
+			var y = b['kmer'].toLowerCase();
 			return x < y ? -1 : x > y ? 1 : 0;
 		});
-	} else if (form_val == 'max') {
+	} else if (form_val == 'sort_max') {
 		data.sort(function(a,b) {
-			return b[form_val] - a[form_val];
+			return b['max'] - a['max'];
 		});
 	}
 		
@@ -1517,7 +1594,7 @@ function draw_boxplot(data, form_val) {
 				.style('opacity', 0)
 				.on("click", function(d) {
 					
-					if(kmer_list.length < 4) {				
+					if(kmer_list.length < 4 && kmer_list.includes(d.kmer)==false) {				
 					
 						d3.select('#tsne').selectAll('circle').remove()	
 						loading_gif()
@@ -1647,6 +1724,12 @@ function draw_boxplot(data, form_val) {
 			        .style('stroke', '#852121')
 			        .style('stroke-width', '4px')
 		})
+
+	for (i = 0; i<kmer_list.length; i++) {
+		d3.select('#'+kmer_list[i]+'_box').style('fill', tsne_colors[i])
+		d3.select('#'+kmer_list[i]+'_box').style('opacity', 0.3)
+		d3.select('#'+kmer_list[i]+'_box').style('stroke', 'none')
+	}
 }
 
 function loading_gif(){
