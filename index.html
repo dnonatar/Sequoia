@@ -10,6 +10,9 @@
 
 <style>
             /* tell the SVG path to be a thin blue line without any area fill */
+            	body {
+            		font-family: sans-serif;
+            	}
 				path { 
 					stroke-width: 1; 
 					fill: none; 
@@ -155,7 +158,7 @@
 </style>
 </head>
 
-<body style='font-family="sans-serif"'>
+<body>
 <div class = "button">
 	<form id="sort">
 		<div> Sort by
@@ -267,6 +270,10 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 
 
 function draw_violin(filtered_data_violin, filtered_data_box) {
+
+	var mySelection = d3.select(".viewport").selectAll("*");
+	console.log("selection size: " + mySelection.size());
+	mySelection.remove();
 
 	//d3.select(".viewport").selectAll("*").remove()   // not gonna work if placed here. why?
 	file1 = './'+folder+'/boxplot_data.csv'
@@ -486,14 +493,16 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 				previous_color = d3.select(this).style('fill')
 				previous_opacity = d3.select(this).style('opacity')
 				d3.select(this)
-					.style('fill', 'grey')
-			        .style('stroke', 'none')
+					.style('fill', 'white')
+			        .style('stroke', 'black')
+				    .style('stroke-width', 3)
 					.style('opacity', 0.4)
 			})
 			.on('mouseout', function(){
 				d3.select(this)
 					.style('fill', previous_color)
 					.style('opacity', previous_opacity)
+					.style('stroke', 'none')
 			})
 
 		/*
@@ -548,18 +557,16 @@ function draw_clicked_violin(clicked_kmers, colors) {
 		
 		clicked_violin = []
 		clicked_box = []
-		for (i=0;i<violin_data.length;i++) {
-			if(clicked_kmers.includes(violin_data[i]['kmer']) ){
-				clicked_violin.push(violin_data[i])
-			}
+		
+		for (i = 0; i < clicked_kmers.length; i++ ) {
+			filtered_datum = violin_data.filter(datum => datum.kmer == clicked_kmers[i])
+			clicked_violin =  clicked_violin.concat(filtered_datum)
 		}
 
-		for (i=0;i<box_data.length;i++) {
-			if(clicked_kmers.includes(box_data[i]['kmer']) ){
-				clicked_box.push(box_data[i])
-			}
+		for (i = 0; i < clicked_kmers.length; i++ ) { 
+			clicked_box.push(box_data.filter(datum => datum.kmer == clicked_kmers[i])[0])
 		}
-
+		
 		violin_data = clicked_violin
 		box_data = clicked_box    // need this to get the median
 		kmerValues = clicked_kmers
@@ -696,6 +703,22 @@ function draw_clicked_violin(clicked_kmers, colors) {
 			
 				})
 
+        		.on('mouseover', function(){
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
+					d3.select(this)
+						.style('fill', 'white')
+				        .style('stroke', 'black')
+					    .style('stroke-width', 3)
+						.style('opacity', 0.4)
+				})
+
+				.on('mouseout', function(){
+					d3.select(this)
+						.style('fill', previous_color)
+						.style('opacity', previous_opacity)
+						.style('stroke', 'none')
+				})
         		/*
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
@@ -1590,7 +1613,7 @@ function draw_boxplot(data, form_val) {
 		        .style('stroke-width', '1px')
 				.style('opacity', 0)
 				.on("click", function(d) {
-					
+									
 					if(kmer_list.length < 4 && kmer_list.includes(d.kmer)==false) {				
 					
 						d3.select('#tsne').selectAll('circle').remove()	
@@ -1643,21 +1666,25 @@ function draw_boxplot(data, form_val) {
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
 					}
-        		})
+
+				})
 
         		
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
 					d3.select(this)
-						.style('fill', 'grey')
-				        .style('stroke', 'none')
+						.style('fill', 'white')
+				        .style('stroke', 'black')
+				        .style('stroke-width', 3)
 						.style('opacity', 0.4)
 				})
 				.on('mouseout', function(){
 					d3.select(this)
 						.style('fill', previous_color)
 						.style('opacity', previous_opacity)
+						.style('stroke', 'none')
+				        
 				})
 
 			d3.select(this)
@@ -1698,14 +1725,14 @@ function draw_boxplot(data, form_val) {
 			        .style('stroke', 'black')
 			        .style('stroke-width', '2px')
 				.on("mouseover", function(d) {
-            div.transition()		
-                .duration(200)		
-                .style("opacity", 1);		
-            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
-                .style("left", (d3.event.pageX) + "px")		
-                .style("top", (d3.event.pageY - 28) + "px");
-						d3.select(this).style('fill', '#ff0000')			
-     				})
+		            div.transition()		
+		                .duration(200)		
+		                .style("opacity", 1);		
+		            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
+		                .style("left", (d3.event.pageX) + "px")		
+		                .style("top", (d3.event.pageY - 28) + "px");
+								d3.select(this).style('fill', '#ff0000')			
+     			})
 		.on("mouseout", function(d) {		
             div.transition()		
                 .duration(500)		
@@ -1742,15 +1769,14 @@ function loading_gif(){
 
 // for selected kmers
 function draw_clicked_boxplot(clicked_kmers, clicked_colors){
-	
 	d3.select('.viewport_selected').selectAll('*').remove()
 	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		all_data = data
 		clicked_data = []
-		for (i=0;i<256;i++) {
-			if(clicked_kmers.includes(data[i]['kmer']) ){
-				clicked_data.push(data[i])
-			}
+		
+		//Selecting only the clicked kmer data
+		for (i = 0; i < clicked_kmers.length; i++ ) { 
+			clicked_data.push(data.filter(datum => datum.kmer == clicked_kmers[i])[0])
 		}
 
 		data = clicked_data
@@ -1861,7 +1887,23 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 					} else{
 							d3.select('#tsne').selectAll('circle').remove()
 					}
-			
+				})
+
+				.on('mouseover', function(){
+					previous_color = d3.select(this).style('fill')
+					previous_opacity = d3.select(this).style('opacity')
+					d3.select(this)
+						.style('fill', 'white')
+				        .style('stroke', 'black')
+					    .style('stroke-width', 3)
+						.style('opacity', 0.4)
+				})
+
+				.on('mouseout', function(){
+					d3.select(this)
+						.style('fill', previous_color)
+						.style('opacity', previous_opacity)
+						.style('stroke', 'none')
 				})
 
 			d3.select(this)
@@ -1980,7 +2022,7 @@ var graph_signal = d3.select(".raw_signal").append("svg:svg")
 			.attr("transform", "translate(0," + signal_init.h + ")")
 			.call(xAxis_signal);
 	graph_signal.append("text")
-			.attr("transform", "translate(730,235)")
+			.attr("transform", "translate(727,235)")
 			.style("text-anchor","middle")
 			.text("time (ms)")
 
