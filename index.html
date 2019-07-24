@@ -702,7 +702,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 					}
 			
 				})
-
+        		/*
         		.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
@@ -719,6 +719,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 						.style('opacity', previous_opacity)
 						.style('stroke', 'none')
 				})
+				*/
         		/*
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
@@ -1888,7 +1889,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 							d3.select('#tsne').selectAll('circle').remove()
 					}
 				})
-
+				/*
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
@@ -1905,7 +1906,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 						.style('opacity', previous_opacity)
 						.style('stroke', 'none')
 				})
-
+				*/
 			d3.select(this)
 				.append('line')
 					.attr('class', 'range')
