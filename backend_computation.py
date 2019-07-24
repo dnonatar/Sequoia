@@ -15,8 +15,12 @@ input_file_name = sys.argv[1]
 ## penalty
 penalty = int(sys.argv[2])
 
+## k-mer list
+kmer_file = pd.read_csv(str(sys.argv[3]), header=None)
+kmer_subset =list(kmer_file[0])
+
 ## output folder
-out_folder = str(sys.argv[3])
+out_folder = str(sys.argv[4])
 
 ############## Process fast5 file
 hf = h5py.File(input_file_name, 'r')
@@ -70,6 +74,31 @@ data_dict = {'read_ID':readID_list, 'kmer':kmer_list, 'values': signal_list}
 data_all = pd.DataFrame(data=data_dict)
 data_all = data_all.sort_values(by=['kmer'])
 
+###############
+
+############### subsetting 5-mers
+for kmer in kmer_subset:
+    if '*' in kmer:
+        pos = kmer.index('*')
+        if pos == 0:
+            kmer_subset.append('A'+kmer[pos+1:])
+            kmer_subset.append('C'+kmer[pos+1:])
+            kmer_subset.append('G'+kmer[pos+1:])
+            kmer_subset.append('T'+kmer[pos+1:])
+        elif pos == len(kmer)-1:
+            kmer_subset.append(kmer[0:pos]+'A')
+            kmer_subset.append(kmer[0:pos]+'C')
+            kmer_subset.append(kmer[0:pos]+'G')
+            kmer_subset.append(kmer[0:pos]+'T')
+        else:
+            kmer_subset.append(kmer[0:pos]+'A'+kmer[pos+1:])
+            kmer_subset.append(kmer[0:pos]+'C'+kmer[pos+1:])
+            kmer_subset.append(kmer[0:pos]+'G'+kmer[pos+1:])
+            kmer_subset.append(kmer[0:pos]+'T'+kmer[pos+1:])
+             
+new_kmer_subset = [kmer for kmer in kmer_subset if ('*' in kmer) == False]
+data_all = data_all[data_all['kmer'].isin(new_kmer_subset)]
+print(new_kmer_subset)
 ###############
 
 
