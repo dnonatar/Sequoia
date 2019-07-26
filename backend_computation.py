@@ -98,7 +98,6 @@ for kmer in kmer_subset:
              
 new_kmer_subset = [kmer for kmer in kmer_subset if ('*' in kmer) == False]
 data_all = data_all[data_all['kmer'].isin(new_kmer_subset)]
-print(new_kmer_subset)
 ###############
 
 
@@ -172,6 +171,14 @@ boxplot_dict = dict([('kmer', kmer_list),
 boxplot_df = pd.DataFrame.from_dict(boxplot_dict)
 boxplot_df.to_csv(out_folder+'/boxplot_data.csv', index=False)   ## output directory for boxplot data
 
+######## get the maximum signal length 
+def get_signal_length(row):
+    return len(row['values'].split('_'))
+
+max_length_dict = {'max_length':[data_all.apply(get_signal_length, axis =1).max()]}
+d_signal_length = pd.DataFrame(max_length_dict)
+d_signal_length.to_csv(out_folder+'/signal_length_max.csv', index=False)
+#########
 
 ## creating datasets for drawing raw signals in d3
 data_all.kmer.unique()
