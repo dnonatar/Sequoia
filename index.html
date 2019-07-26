@@ -202,7 +202,7 @@
 <div class = "raw_signal"></div>
 
 <div class = "export_button">
-	<button onclick="download_csv()">Download CSV</button> (export selected points)
+	<button onclick="download_csv()">Download CSV</button> (export clicked points)
 </div>
 
 <!--<div class = "reset_button">
@@ -214,10 +214,10 @@
 <div>
 
 <script type="text/javascript">
-var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 127, 0)"]
+var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]
 var tsne_colors = []
 var folder = 'data'
-
+var kmer_number = null
 
 function reset() {
 	d3.select("").selectAll('*').remove()
@@ -225,7 +225,7 @@ function reset() {
 
 // On landing page, use 'data' as a default folder
 d3.csv('data'+'/boxplot_data.csv', function(data) {
-	//folder='data'
+	kmer_number = data.length
 	function changeBoxplot(){
 		d3.select(".viewport").selectAll("*").remove()
 		var form = document.getElementById("sort")
@@ -361,7 +361,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		var y = d3.scaleBand()
 			.domain(kmerValues)
 		    //.range([ 0, height ])
-		    .range([ 0, height/256*box_data.length ])
+		    .range([ 0, height/kmer_number*box_data.length ])
 		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
 		  svg.append("g")
 		  	 .style("font", "14px times")
@@ -926,7 +926,7 @@ function handleType(event){
 	
 var opt = {} // epsilon is learning rate (10 = default)
 opt.epsilon = 10;
-opt.perplexity = 80;
+opt.perplexity = 5;
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
 
@@ -974,8 +974,8 @@ d3.select("#tsne").append("text")
 		.text("t-SNE 2")
 
 // function for drawing t-sne
-function draw_tsne(position, kmer_list) {
-		
+function draw_tsne(position, kmer_list, kmer_size) {
+		console.log(kmer_size)
 		var width = 500;
 		var height = 400;
 		//var padding = 65;
@@ -1058,25 +1058,25 @@ function draw_tsne(position, kmer_list) {
 						return tsne_colors[0];
 					
 					} else if (kmer_list.length == 2) {	
-						if (i < position.length/2) {
+						if (i < kmer_size[0]) {
 							return tsne_colors[0];
 						} else {
 							return tsne_colors[1];
 						}
 					} else if (kmer_list.length == 3) {
-						if (i < position.length/3) {
+						if (i < kmer_size[0]) {
 							return tsne_colors[0];
-						} else if(i >= position.length/3 && i < 2*position.length/3) {
+						} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
 							return tsne_colors[1];
 						} else {
 							return tsne_colors[2];
 						}
 					} else if (kmer_list.length == 4) {
-							if (i < position.length/4) {
+							if (i < kmer_size[0]) {
 							return tsne_colors[0];
-						} else if(i >= position.length/4 && i < 2*position.length/4) {
+						} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
 							return tsne_colors[1];
-						} else if(i >= 2*position.length/4 && i < 3*position.length/4) {
+						} else if(i >= kmer_size[0]+kmer_size[1] && i < kmer_size[0]+kmer_size[1]+kmer_size[2]) {
 							return tsne_colors[2];
 						} else {
 							return tsne_colors[3];
@@ -1517,7 +1517,7 @@ var div = d3.select("body").append("div")
     .attr("class", "tooltip")				
     .style("opacity", 0);
 
-box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(0, 0, 0)","rgb(255, 127, 0)"]  //reset when changing sort type
+box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]  //reset when changing sort type
 
 kmer_list = []
 function draw_boxplot(data, form_val) {
@@ -1539,7 +1539,7 @@ function draw_boxplot(data, form_val) {
 	}
 		
 	var w = 580
-	var h = 7500*data.length /256
+	var h = 7500*data.length /kmer_number
 	var margin = {
 	    top: 20,
 	    bottom: 20,
@@ -1783,7 +1783,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 		data = clicked_data
 		kmerValues = clicked_kmers
 		var w = 350
-		var h = 7500*clicked_data.length /256
+		var h = 7500*clicked_data.length /kmer_number
 		var margin = {
 		    top: 20,
 		    bottom: 20,
@@ -1992,59 +1992,65 @@ function download_csv() {
 	hiddenElement.click();
 }		
 
+d3.csv(folder+'/signal_length_max.csv', function(data) {
+	var max_signal_length = data[0]['max_length']
+	console.log(max_signal_length)
+	// initialize raw signal plot on landing page
+	var signal_init = {
+		m : [20, 40, 20, 90], // margins
+		w : 800 - 40 - 90, // width
+		h : 270 - 20 - 20 // height
+	}
+	var graph_signal = d3.select(".raw_signal").append("svg:svg")
+			.attr("width", signal_init.w + signal_init.m[1] + signal_init.m[3])
+			.attr("height", signal_init.h + signal_init.m[0] + signal_init.m[2])
+			.attr("id", "signal")
+		.append("svg:g")
+			.attr("transform", "translate(" + signal_init.m[1] + "," + signal_init.m[0] + ")")
+		
+		var xScale_signal = d3.scaleLinear()
+							.domain([0, max_signal_length]) //set max value to fix the x-axis
+							.range([0, signal_init.w]);
 
-// initialize raw signal plot on landing page
-var signal_init = {
-	m : [20, 40, 20, 90], // margins
-	w : 800 - 40 - 90, // width
-	h : 270 - 20 - 20 // height
-}
-var graph_signal = d3.select(".raw_signal").append("svg:svg")
-		.attr("width", signal_init.w + signal_init.m[1] + signal_init.m[3])
-		.attr("height", signal_init.h + signal_init.m[0] + signal_init.m[2])
-		.attr("id", "signal")
-	.append("svg:g")
-		.attr("transform", "translate(" + signal_init.m[1] + "," + signal_init.m[0] + ")")
-	
-	var xScale_signal = d3.scaleLinear()
-						.domain([0, 260]) //set max value to fix the x-axis
-						.range([0, signal_init.w]);
+		 var yScale_signal = d3.scaleLinear().domain([0, 0]).range([signal_init.h, 0]); 
 
-	 var yScale_signal = d3.scaleLinear().domain([0, 0]).range([signal_init.h, 0]); 
+		// create xAxis
+		var xAxis_signal = d3.axisBottom()
+					.scale(xScale_signal)
+					.tickSize(-signal_init.h)
+					//.tickSubdivide(true);
+		// Add the x-axis.
+		graph_signal.append("svg:g")
+				.attr("class", "x axis")
+				.attr("transform", "translate(0," + signal_init.h + ")")
+				.call(xAxis_signal);
+		graph_signal.append("text")
+				.attr("transform", "translate(727,235)")
+				.style("text-anchor","middle")
+				.text("time (ms)")
 
-	// create xAxis
-	var xAxis_signal = d3.axisBottom()
-				.scale(xScale_signal)
-				.tickSize(-signal_init.h)
-				//.tickSubdivide(true);
-	// Add the x-axis.
-	graph_signal.append("svg:g")
-			.attr("class", "x axis")
-			.attr("transform", "translate(0," + signal_init.h + ")")
-			.call(xAxis_signal);
-	graph_signal.append("text")
-			.attr("transform", "translate(727,235)")
-			.style("text-anchor","middle")
-			.text("time (ms)")
+		// create yaxis
+		var yAxis_signal = d3.axisLeft()
+				.scale(yScale_signal)
+		
+		graph_signal.append("svg:g")
+				.attr("class", "y axis")
+				.attr("transform", "translate(0,0)")
+				.call(yAxis_signal);		
 
-	// create yaxis
-	var yAxis_signal = d3.axisLeft()
-			.scale(yScale_signal)
-	
-	graph_signal.append("svg:g")
-			.attr("class", "y axis")
-			.attr("transform", "translate(0,0)")
-			.call(yAxis_signal);		
+		graph_signal.append("text")
+				.attr("transform", "translate(12,-5)")
+				.style("text-anchor","middle")
+				.text("current (mA)")
 
-	graph_signal.append("text")
-			.attr("transform", "translate(12,-5)")
-			.style("text-anchor","middle")
-			.text("current (mA)")
-
+})
 var array_export 
 
 // draw raw signals based on the data passed from add_signal
 function draw_signal(data_click,data_hover, data_brush) {
+	d3.csv(folder+'/signal_length_max.csv', function(data) {
+		max_signal_length = data[0]['max_length']
+				
 			 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
 			 array_export = data_export.map(function(obj) {
 				return Object.keys(obj).sort().map(function(key) { 
@@ -2065,7 +2071,7 @@ function draw_signal(data_click,data_hover, data_brush) {
         	    if (data_brush[i].length > x_max) x_max = data_brush[i].length;
         	};*/
         	var x = d3.scaleLinear()
-						.domain([0, 260]) //set max value to fix the x-axis
+						.domain([0, max_signal_length]) //set max value to fix the x-axis
 						.range([0, w]);
         	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
         	
@@ -2134,7 +2140,8 @@ function draw_signal(data_click,data_hover, data_brush) {
 
 					// add lines
         	// do this AFTER the axes above so that the line is above the tick-lines
-					// signal plots for the clicked points
+					
+			// signal plots for the clicked points
         	for (var i = data_click.length - 1; i >= 0; i--) {
         	    graph.append("svg:path")
 						.attr("d", line(data_click[i]))
@@ -2144,21 +2151,6 @@ function draw_signal(data_click,data_hover, data_brush) {
 			};  
 					
 			// signal plot for the hovered point				
-			/*for (var i = data_hover.length - 1; i >= 0; i--) {
-				graph.append("svg:path")
-						.attr("d", line(data_hover[i]))
-						.attr("class","line_hover")
-						.attr('transform', function(d) {
-   	    						if (d3.select("#normalize_checkbox").property("checked")) {
-   	    							return 'scale(' + (1/(d.length/260)) + ' 1)';
-   	    						}
-   	    						else {
-   	    							return null;
-   	    						}
-   	    					})
-   	    					.attr('vector-effect', 'non-scaling-stroke')
-			};*/
-			
 			graph.selectAll(".line")
 				.data(data_hover)
 				.enter().append("svg:path")
@@ -2166,7 +2158,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 							.attr("class","line_hover")
 							.attr('transform', function(d) {
    	    						if (d3.select("#normalize_checkbox").property("checked")) {
-   	    							return 'scale(' + (1/(d.length/260)) + ' 1)';
+   	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
    	    						}
    	    						else {
    	    							return null;
@@ -2175,7 +2167,6 @@ function draw_signal(data_click,data_hover, data_brush) {
    	    					.attr('vector-effect', 'non-scaling-stroke')	
 					
 			// signal plots for the brushed points
-			
 			graph.selectAll(".line")
 				.data(data_brush)
 				.enter().append("svg:path")
@@ -2183,7 +2174,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 							.attr("class", "line_brush")
 							.attr('transform', function(d) {
    	    						if (d3.select("#normalize_checkbox").property("checked")) {
-   	    							return 'scale(' + (1/(d.length/260)) + ' 1)';
+   	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
    	    						}
    	    						else {
    	    							return null;
@@ -2195,6 +2186,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 
 			putNodeOnTop(d3.select(".line_hover").node());
+	})
 }
 
 function putNodeOnTop(node) {
@@ -2218,7 +2210,8 @@ function combine_1_kmer(kmer_list){
 		file1 = file1.map(obj => Object.values(obj));
 		
 		// call update_tsne
-		update_tsne(file1, kmer_list)
+		kmer_size =  [file1.length]
+		update_tsne(file1, kmer_list, kmer_size)
 	}
 }
 
@@ -2249,7 +2242,9 @@ function combine_2_kmers(kmer_list){
 		combined_matrix = kmer1_row.concat(kmer2_row)
 		
 		// call update_tsne
-		update_tsne(combined_matrix, kmer_list)
+
+		kmer_size =  [file1.length, file4.length]
+		update_tsne(combined_matrix, kmer_list, kmer_size)
 	}
 }
 
@@ -2293,7 +2288,8 @@ function combine_3_kmers(kmer_list){
 		combined_matrix = kmer1_row.concat(kmer2_row).concat(kmer3_row)
 				
 		// call update_tsne
-		update_tsne(combined_matrix, kmer_list)
+		kmer_size =  [file1.length, file5.length, file9.length]
+		update_tsne(combined_matrix, kmer_list, kmer_size)
 	}
 }
 function combine_4_kmers(kmer_list){
@@ -2354,7 +2350,8 @@ function combine_4_kmers(kmer_list){
 		combined_matrix = kmer1_row.concat(kmer2_row).concat(kmer3_row).concat(kmer4_row)
 				
 		// call update_tsne
-		update_tsne(combined_matrix, kmer_list)
+		kmer_size =  [file1.length, file6.length, file11.length, file16.length]
+		update_tsne(combined_matrix, kmer_list, kmer_size)
 	}
 }
 
@@ -2375,8 +2372,8 @@ var target = d3.select(".tsne").node();
 
 
 //var update_tsne = function(data, kmer_list) {
-function update_tsne(data, kmer_list) {
-				
+function update_tsne(data, kmer_list, kmer_size) {
+	console.log(data)			
 	
 	//for(i=0; i<data.columns.length;i++){data.forEach(function(d){ d[data.columns[i]] = +d[data.columns[i]]; });}
 	var dists = data.map(obj => Object.values(obj));
@@ -2387,7 +2384,7 @@ function update_tsne(data, kmer_list) {
 	var Y = tsne.getSolution(); 
 	
 	
-	draw_tsne(Y, kmer_list)
+	draw_tsne(Y, kmer_list, kmer_size)
 	
 }
 </script>
