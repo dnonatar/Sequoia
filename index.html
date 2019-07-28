@@ -19,7 +19,7 @@
 				} 
 				.line_hover { 
 					stroke: #ff0000; 
-					stroke-width: 3;
+					stroke-width: 2;
 					opacity : 1;
 				} 
 				.line_click {
@@ -702,8 +702,8 @@ function draw_clicked_violin(clicked_kmers, colors) {
 					}
 			
 				})
-        		/*
-        		.on('mouseover', function(){
+				.on('mouseover', function(d){
+					/*
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
 					d3.select(this)
@@ -711,15 +711,23 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				        .style('stroke', 'black')
 					    .style('stroke-width', 3)
 						.style('opacity', 0.4)
+					*/
+					
+					draw_signal(data_click,data_hover = data_brush_byKmer[d.key] , data_brush)
+					
 				})
 
+				
 				.on('mouseout', function(){
+					/*
 					d3.select(this)
 						.style('fill', previous_color)
 						.style('opacity', previous_opacity)
 						.style('stroke', 'none')
+					*/
+					draw_signal(data_click,data_hover = [] , data_brush)
 				})
-				*/
+        		
         		/*
 				.on('mouseover', function(){
 					previous_color = d3.select(this).style('fill')
@@ -926,7 +934,7 @@ function handleType(event){
 	
 var opt = {} // epsilon is learning rate (10 = default)
 opt.epsilon = 10;
-opt.perplexity = 5;
+opt.perplexity = 35;
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
 
@@ -975,7 +983,6 @@ d3.select("#tsne").append("text")
 
 // function for drawing t-sne
 function draw_tsne(position, kmer_list, kmer_size) {
-		console.log(kmer_size)
 		var width = 500;
 		var height = 400;
 		//var padding = 65;
@@ -1129,10 +1136,10 @@ function draw_tsne(position, kmer_list, kmer_size) {
 		var lastBrushEvent = 0;
 
 		function whileBrush() {
-				// disregard brushes w/o selections				
-				if (!d3.event.selection) return;
-				// programmed clearing of brush after mouse-up
-				//d3.select(this).call(brush.move, null);
+			// disregard brushes w/o selections				
+			if (!d3.event.selection) return;
+			// programmed clearing of brush after mouse-up
+			//d3.select(this).call(brush.move, null);
 				
 			if (d3.event.selection != null) 
 			{
@@ -1150,7 +1157,8 @@ function draw_tsne(position, kmer_list, kmer_size) {
 			}
 
 			// get indices for the brushed points
-			var d_brushed =  d3.selectAll(".brushed").data();			
+			var d_brushed =  d3.selectAll(".brushed").data();
+
 			var row_list = []				
 			if (d_brushed.length > 0 && row_list.length ==0) 
 			{
@@ -1181,13 +1189,26 @@ function isBrushed(brush_coords, cx, cy) {
 	
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
 }
+
 // add new signals to data array and then pass it to draw_signal 
 var data_click = []
 var data_hover = []
 var data_row = []
 var data_brush = []
 var data_export = []
+
+var data_brush_byKmer 
+var data_brush_kmer1 = []
+var data_brush_kmer2 = []
+var data_brush_kmer3 = []
+var data_brush_kmer4 = []
+
 function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
+	data_brush_kmer1.length = 0
+	data_brush_kmer2.length = 0
+	data_brush_kmer3.length = 0
+	data_brush_kmer4.length = 0
+
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
 		filename1 = folder+'/raw_signal/'+kmer1+'_signal.csv';
@@ -1195,38 +1216,26 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 		(function(row_list, filename1, currentBrushEvent) {
 
 			queue()
-				.defer(
-					d3.csv, filename1
-					/*
-					function(_callback) {
-						setTimeout(function() 
-						{
-							if (currentBrushEvent == lastBrushEvent) {
-								d3.csv(filename1, _callback); 
-							}
-							else
-							{
-								_callback(true);
-							}
-						}, 5);
-					}
-					*/
-				)
+				.defer(d3.csv, filename1)
 				.await(add)
 		
 			function add(error, file1){
-					if (error) { console.log("SAVED loading"); return; }
-					d = file1
-					if (data_brush.length >0){
-							data_brush.length = 0
-					}
-					for (i=0;i<row_list.length;i++){
-							row = row_list[i]
-							data_brush.push(d[row]['values'].split("_").map(Number))
-					}
-					
-					draw_signal(data_click, data_hover, data_brush)
+				if (error) { console.log("SAVED loading"); return; }
+				d = file1
+				if (data_brush.length >0){
+					data_brush.length = 0
+				}
+				for (i=0;i<row_list.length;i++){
+					row = row_list[i]
+					data_brush.push(d[row]['values'].split("_").map(Number))
+				}
+				draw_signal(data_click, data_hover, data_brush)
+
+				data_brush_byKmer = {}
+				data_brush_byKmer[kmer_list[0]] = data_brush
+				
 			}
+
 		})(row_list, filename1, currentBrushEvent);
 
 	} else if (kmer_list.length == 2) {
@@ -1240,16 +1249,28 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			.await(add)
 	
 		function add(error, file1, file2){
-				d = file1.concat(file2)
-				if (data_brush.length >0){
-						data_brush.length = 0
+			d = file1.concat(file2)
+			if (data_brush.length >0){
+				data_brush.length = 0
+			}
+			
+			for (i=0;i<row_list.length;i++){
+				row = row_list[i]
+				data_brush.push(d[row]['values'].split("_").map(Number))
+
+				if (row < kmer_size[0]){
+					data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
+				} else {
+					data_brush_kmer2.push(d[row]['values'].split("_").map(Number))
 				}
-				for (i=0;i<row_list.length;i++){
-						row = row_list[i]
-						data_brush.push(d[row]['values'].split("_").map(Number))
-				}
-				
-				draw_signal(data_click, data_hover, data_brush)
+			}
+			
+			data_brush_byKmer = {}
+			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
+			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
+
+			draw_signal(data_click, data_hover, data_brush)
+
 		}
 	}	else if (kmer_list.length == 3) {
 		kmer1 = kmer_list[0]
@@ -1265,16 +1286,29 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			.await(add)
 	
 		function add(error, file1, file2, file3){
-				d = file1.concat(file2).concat(file3)
-				if (data_brush.length >0){
-						data_brush.length = 0
+			d = file1.concat(file2).concat(file3)
+			if (data_brush.length >0){
+					data_brush.length = 0
+			}
+			for (i=0;i<row_list.length;i++){
+				row = row_list[i]
+				data_brush.push(d[row]['values'].split("_").map(Number))
+
+				if (row < kmer_size[0]){
+				data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
+				} else if (row >= kmer_size[0] && row < kmer_size[0] + kmer_size[1]) {
+					data_brush_kmer2.push(d[row]['values'].split("_").map(Number))
+				} else {
+					data_brush_kmer3.push(d[row]['values'].split("_").map(Number))
 				}
-				for (i=0;i<row_list.length;i++){
-						row = row_list[i]
-						data_brush.push(d[row]['values'].split("_").map(Number))
-				}
-				
-				draw_signal(data_click, data_hover, data_brush)
+			}
+			
+			data_brush_byKmer = {}
+			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
+			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
+			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
+
+			draw_signal(data_click, data_hover, data_brush)
 		}
 	}	else if (kmer_list.length == 4) {
 		kmer1 = kmer_list[0]
@@ -1293,19 +1327,38 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			.await(add)
 	
 		function add(error, file1, file2, file3, file4){
-				d = file1.concat(file2).concat(file3).concat(file4)
-				if (data_brush.length >0){
-						data_brush.length = 0
+			d = file1.concat(file2).concat(file3).concat(file4)
+			if (data_brush.length >0){
+					data_brush.length = 0
+			}
+			for (i=0;i<row_list.length;i++){
+				row = row_list[i]
+				data_brush.push(d[row]['values'].split("_").map(Number))
+
+				if (row < kmer_size[0]){
+					data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
+				} else if (row >= kmer_size[0] && row < kmer_size[0] + kmer_size[1]) {
+					data_brush_kmer2.push(d[row]['values'].split("_").map(Number))
+				} else if (row >= kmer_size[0]+kmer_size[1] && row < kmer_size[0]+kmer_size[1]+kmer_size[2]){
+					data_brush_kmer3.push(d[row]['values'].split("_").map(Number))
+				} else {
+					data_brush_kmer4.push(d[row]['values'].split("_").map(Number))
 				}
-				for (i=0;i<row_list.length;i++){
-						row = row_list[i]
-						data_brush.push(d[row]['values'].split("_").map(Number))
-				}
-				
-				draw_signal(data_click, data_hover, data_brush)
+			}
+
+			data_brush_byKmer = {}
+			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
+			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
+			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
+			data_brush_byKmer[kmer_list[3]] = data_brush_kmer4
+			
+			draw_signal(data_click, data_hover, data_brush)
 		}
-	}	
+	}
+
 }
+
+
 function add_signal(row, kmer_list){
 	if (kmer_list.length == 1) {
 		kmer1 = kmer_list[0]
@@ -1424,14 +1477,14 @@ function add_signal_hover(row, kmer_list){
 		current_kmer = kmer1
 		signalToAdd = current_kmer + '_' + row;
 		function add(error, file1){
-				d = file1
-						d3.selectAll('.line_hover').remove();
-						if (signalToAdd == current_kmer + '_' + row)
-						{
-							data_hover.push(d[row]['values'].split("_").map(Number))
-							draw_signal(data_click, data_hover, data_brush)
-							
-						}
+			d = file1
+			d3.selectAll('.line_hover').remove();
+			if (signalToAdd == current_kmer + '_' + row)
+			{
+				data_hover.push(d[row]['values'].split("_").map(Number))
+				draw_signal(data_click, data_hover, data_brush)
+				
+			}
 	
 		}
 	}	else if (kmer_list.length == 2) {
@@ -1606,8 +1659,8 @@ function draw_boxplot(data, form_val) {
 		        .attr('class', 'cover')
 		        .attr('id', d['kmer']+'_box')
 		        .attr('x', -100)
-		        .attr('y', -15)
-		        .attr('height', 30)
+		        .attr('y', -10)
+		        .attr('height', 20)
 		        .attr('width', 480)
 		        .style('fill', 'white')
 		        .style('stroke', 'black')
@@ -1889,8 +1942,9 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 							d3.select('#tsne').selectAll('circle').remove()
 					}
 				})
-				/*
+				
 				.on('mouseover', function(){
+					/*
 					previous_color = d3.select(this).style('fill')
 					previous_opacity = d3.select(this).style('opacity')
 					d3.select(this)
@@ -1898,15 +1952,23 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 				        .style('stroke', 'black')
 					    .style('stroke-width', 3)
 						.style('opacity', 0.4)
+					*/
+					
+					draw_signal(data_click,data_hover = data_brush_byKmer[d.kmer] , data_brush)
+					
 				})
 
+				
 				.on('mouseout', function(){
+					/*
 					d3.select(this)
 						.style('fill', previous_color)
 						.style('opacity', previous_opacity)
 						.style('stroke', 'none')
+					*/
+					draw_signal(data_click,data_hover = [] , data_brush)
 				})
-				*/
+				
 			d3.select(this)
 				.append('line')
 					.attr('class', 'range')
@@ -1994,7 +2056,6 @@ function download_csv() {
 
 d3.csv(folder+'/signal_length_max.csv', function(data) {
 	var max_signal_length = data[0]['max_length']
-	console.log(max_signal_length)
 	// initialize raw signal plot on landing page
 	var signal_init = {
 		m : [20, 40, 20, 90], // margins
@@ -2050,142 +2111,142 @@ var array_export
 function draw_signal(data_click,data_hover, data_brush) {
 	d3.csv(folder+'/signal_length_max.csv', function(data) {
 		max_signal_length = data[0]['max_length']
-				
-			 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
-			 array_export = data_export.map(function(obj) {
-				return Object.keys(obj).sort().map(function(key) { 
-				return obj[key];
-				});
+			
+		 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
+		 array_export = data_export.map(function(obj) {
+			return Object.keys(obj).sort().map(function(key) { 
+			return obj[key];
 			});
+		});
 
-			var data = data_hover.concat(data_click).concat(data_brush)
-			
-			var m = [20, 40, 20, 90]; // margins
-        	var w = 800 - m[1] - m[3]; // width
-        	var h = 270 - m[0] - m[2]; // height
-        	 
-        	
-        	// X scale will fit all values from data[] within pixels 0-w
-        	/*var x_max = 0;
-        	for (var i = data_brush.length - 1; i >= 0; i--) {
-        	    if (data_brush[i].length > x_max) x_max = data_brush[i].length;
-        	};*/
-        	var x = d3.scaleLinear()
-						.domain([0, max_signal_length]) //set max value to fix the x-axis
-						.range([0, w]);
-        	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
-        	
-					var min = 999999;
-					var max = 0;
-					for (var i = data.length - 1; i >= 0; i--) {
-        	    if(Math.max.apply(Math, data[i]) > max) max = Math.max.apply(Math, data[i])
-							if(Math.min.apply(Math, data[i]) < min) min = Math.min.apply(Math, data[i])
-        	};
+		var data = data_hover.concat(data_click).concat(data_brush)
+		
+		var m = [20, 40, 20, 90]; // margins
+    	var w = 800 - m[1] - m[3]; // width
+    	var h = 270 - m[0] - m[2]; // height
+    	 
+    	
+    	// X scale will fit all values from data[] within pixels 0-w
+    	/*var x_max = 0;
+    	for (var i = data_brush.length - 1; i >= 0; i--) {
+    	    if (data_brush[i].length > x_max) x_max = data_brush[i].length;
+    	};*/
+    	var x = d3.scaleLinear()
+					.domain([0, max_signal_length]) //set max value to fix the x-axis
+					.range([0, w]);
+    	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
+    	
+				var min = 999999;
+				var max = 0;
+				for (var i = data.length - 1; i >= 0; i--) {
+    	    if(Math.max.apply(Math, data[i]) > max) max = Math.max.apply(Math, data[i])
+						if(Math.min.apply(Math, data[i]) < min) min = Math.min.apply(Math, data[i])
+    	};
+				
+    	var y = d3.scaleLinear().domain([min, max]).range([h, 0]); 
+				
+    	// automatically determining max range can work something like this
+    	//var y = d3.scaleLinear().domain([0, d3.max(data_hover[0])]).range([h, 0]);
+    	// create a line function that can convert data[] into x and y points
+    	var line = d3.line()
+    	// assign the X function to plot our line as we wish
+    	.x(function(d, i) {
+    	    
+    	    // return the X coordinate where we want to plot this datapoint
+    	    return x(i);
+    	}).y(function(d) {
+    	    
+    	    // return the Y coordinate where we want to plot this datapoint
+    	    return y(d);
+    	})
+    	// Add an SVG element with the desired dimensions and margin.
+		d3.select(".raw_signal").selectAll('*').remove()
+    	var graph = d3.select(".raw_signal")
+					.append("svg:svg")
+						.attr("width", w + m[1] + m[3])
+						.attr("height", h + m[0] + m[2])
+						.attr("id", "signal")
+					.append("svg:g")
+						.attr("transform", "translate(" + m[1] + "," + m[0] + ")")
 					
-        	var y = d3.scaleLinear().domain([min, max]).range([h, 0]); 
-					
-        	// automatically determining max range can work something like this
-        	//var y = d3.scaleLinear().domain([0, d3.max(data_hover[0])]).range([h, 0]);
-        	// create a line function that can convert data[] into x and y points
-        	var line = d3.line()
-        	// assign the X function to plot our line as we wish
-        	.x(function(d, i) {
-        	    
-        	    // return the X coordinate where we want to plot this datapoint
-        	    return x(i);
-        	}).y(function(d) {
-        	    
-        	    // return the Y coordinate where we want to plot this datapoint
-        	    return y(d);
-        	})
-        	// Add an SVG element with the desired dimensions and margin.
-			d3.select(".raw_signal").selectAll('*').remove()
-        	var graph = d3.select(".raw_signal")
-						.append("svg:svg")
-							.attr("width", w + m[1] + m[3])
-							.attr("height", h + m[0] + m[2])
-							.attr("id", "signal")
-						.append("svg:g")
-							.attr("transform", "translate(" + m[1] + "," + m[0] + ")")
-						
-        	// create xAxis
-        	var xAxis = d3.axisBottom()
-						.scale(x)
-						.tickSize(-h)
-						//.tickSubdivide(true);
-        	// Add the x-axis.
-        	graph.append("svg:g")
-					.attr("class", "x axis")
-					.attr("transform", "translate(0," + h + ")")
-					.call(xAxis);
-        	graph.append("text")
-					.attr("transform", "translate(730,235)")
-					.style("text-anchor","middle")
-					.text("time (ms)")
+    	// create xAxis
+    	var xAxis = d3.axisBottom()
+					.scale(x)
+					.tickSize(-h)
+					//.tickSubdivide(true);
+    	// Add the x-axis.
+    	graph.append("svg:g")
+				.attr("class", "x axis")
+				.attr("transform", "translate(0," + h + ")")
+				.call(xAxis);
+    	graph.append("text")
+				.attr("transform", "translate(730,235)")
+				.style("text-anchor","middle")
+				.text("time (ms)")
 
 
-			// create yaxis
-			var yAxis = d3.axisLeft()
-					.scale(y)
-			
-			graph.append("svg:g")
-					.attr("class", "y axis")
-					.attr("transform", "translate(0,0)")
-					.call(yAxis);		
+		// create yaxis
+		var yAxis = d3.axisLeft()
+				.scale(y)
+		
+		graph.append("svg:g")
+				.attr("class", "y axis")
+				.attr("transform", "translate(0,0)")
+				.call(yAxis);		
 
-			graph.append("text")
-					.attr("transform", "translate(12,-5)")
-					.style("text-anchor","middle")
-					.text("current (mA)")
+		graph.append("text")
+				.attr("transform", "translate(12,-5)")
+				.style("text-anchor","middle")
+				.text("current (mA)")
 
-					// add lines
-        	// do this AFTER the axes above so that the line is above the tick-lines
-					
-			// signal plots for the clicked points
-        	for (var i = data_click.length - 1; i >= 0; i--) {
-        	    graph.append("svg:path")
-						.attr("d", line(data_click[i]))
-						.attr("class","line_click")
+				// add lines
+    	// do this AFTER the axes above so that the line is above the tick-lines
+				
+		// signal plots for the clicked points
+    	for (var i = data_click.length - 1; i >= 0; i--) {
+    	    graph.append("svg:path")
+					.attr("d", line(data_click[i]))
+					.attr("class","line_click")
+					.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
+					.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
+		};  
+				
+		// signal plot for the hovered point				
+		graph.selectAll(".line")
+			.data(data_hover)
+			.enter().append("svg:path")
+						.attr("d", line)
+						.attr("class","line_hover")
+						.attr('transform', function(d) {
+	    						if (d3.select("#normalize_checkbox").property("checked")) {
+	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+	    						}
+	    						else {
+	    							return null;
+	    						}
+	    					})
+	    					.attr('vector-effect', 'non-scaling-stroke')	
+				
+		// signal plots for the brushed points
+		graph.selectAll(".line")
+			.data(data_brush)
+			.enter().append("svg:path")
+						.attr("d", line)
+						.attr("class", "line_brush")
+						.attr('transform', function(d) {
+	    						if (d3.select("#normalize_checkbox").property("checked")) {
+	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+	    						}
+	    						else {
+	    							return null;
+	    						}
+	    					})
+	    					.attr('vector-effect', 'non-scaling-stroke')
+	    					.attr("id", function(d,i){return "line_brush_"+d; })  
 						.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
 						.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
-			};  
-					
-			// signal plot for the hovered point				
-			graph.selectAll(".line")
-				.data(data_hover)
-				.enter().append("svg:path")
-							.attr("d", line)
-							.attr("class","line_hover")
-							.attr('transform', function(d) {
-   	    						if (d3.select("#normalize_checkbox").property("checked")) {
-   	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
-   	    						}
-   	    						else {
-   	    							return null;
-   	    						}
-   	    					})
-   	    					.attr('vector-effect', 'non-scaling-stroke')	
-					
-			// signal plots for the brushed points
-			graph.selectAll(".line")
-				.data(data_brush)
-				.enter().append("svg:path")
-							.attr("d", line)
-							.attr("class", "line_brush")
-							.attr('transform', function(d) {
-   	    						if (d3.select("#normalize_checkbox").property("checked")) {
-   	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
-   	    						}
-   	    						else {
-   	    							return null;
-   	    						}
-   	    					})
-   	    					.attr('vector-effect', 'non-scaling-stroke')
-   	    					.attr("id", function(d,i){return "line_brush_"+d; })  
-							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
-							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 
-			putNodeOnTop(d3.select(".line_hover").node());
+		putNodeOnTop(d3.selectAll(".line_hover").nodes());
 	})
 }
 
@@ -2373,9 +2434,7 @@ var target = d3.select(".tsne").node();
 
 //var update_tsne = function(data, kmer_list) {
 function update_tsne(data, kmer_list, kmer_size) {
-	console.log(data)			
 	
-	//for(i=0; i<data.columns.length;i++){data.forEach(function(d){ d[data.columns[i]] = +d[data.columns[i]]; });}
 	var dists = data.map(obj => Object.values(obj));
 	tsne.initDataDist(dists);
 	for(var k = 0; k < 250; k++) {
