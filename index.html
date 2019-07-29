@@ -261,8 +261,10 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 		
 		if (section == 'violin') {
 			draw_violin(filtered_data_violin=[],filtered_data_box=[]);
+			draw_clicked_violin(kmer_list, tsne_colors);
 		} else {
-			changeBoxplot();			
+			changeBoxplot();
+			draw_clicked_boxplot(kmer_list, tsne_colors)			
 		}
 	})
 
@@ -330,7 +332,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 
 		// set the dimensions and margins of the graph
 		var margin = {top: 35, right: 20, bottom: 30, left: 60},
-		    width = 360 - margin.left - margin.right,
+		    width = 460 - margin.left - margin.right,
 		    height = 8400 - margin.top - margin.bottom;
 
 		// append the svg object to the body of the page
@@ -345,6 +347,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		// Read the data and compute summary statistics for each 
 		
 		var kmerValues = violin_data.map(d => d['kmer'])
+
 		// Build and Show the x scale
 		var x = d3.scaleLinear()
 		  .domain([ 0,2500 ])          
@@ -1195,7 +1198,8 @@ var data_click = []
 var data_hover = []
 var data_row = []
 var data_brush = []
-var data_export = []
+var data_export_click = []
+var data_export_brush = []
 
 var data_brush_byKmer 
 var data_brush_kmer1 = []
@@ -1222,12 +1226,14 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			function add(error, file1){
 				if (error) { console.log("SAVED loading"); return; }
 				d = file1
-				if (data_brush.length >0){
-					data_brush.length = 0
-				}
+				
+				data_brush.length = 0
+				data_export_brush.length = 0
+
 				for (i=0;i<row_list.length;i++){
 					row = row_list[i]
 					data_brush.push(d[row]['values'].split("_").map(Number))
+					data_export_brush.push(d[row])
 				}
 				draw_signal(data_click, data_hover, data_brush)
 
@@ -1250,13 +1256,14 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	
 		function add(error, file1, file2){
 			d = file1.concat(file2)
-			if (data_brush.length >0){
-				data_brush.length = 0
-			}
 			
+			data_brush.length = 0
+			data_export_brush.length = 0
+
 			for (i=0;i<row_list.length;i++){
 				row = row_list[i]
 				data_brush.push(d[row]['values'].split("_").map(Number))
+				data_export_brush.push(d[row])
 
 				if (row < kmer_size[0]){
 					data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
@@ -1287,12 +1294,14 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	
 		function add(error, file1, file2, file3){
 			d = file1.concat(file2).concat(file3)
-			if (data_brush.length >0){
-					data_brush.length = 0
-			}
+			
+			data_brush.length = 0
+			data_export_brush.length = 0
+			
 			for (i=0;i<row_list.length;i++){
 				row = row_list[i]
 				data_brush.push(d[row]['values'].split("_").map(Number))
+				data_export_brush.push(d[row])
 
 				if (row < kmer_size[0]){
 				data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
@@ -1328,12 +1337,14 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	
 		function add(error, file1, file2, file3, file4){
 			d = file1.concat(file2).concat(file3).concat(file4)
-			if (data_brush.length >0){
-					data_brush.length = 0
-			}
+			
+			data_brush.length = 0
+			data_export_brush.length = 0
+			
 			for (i=0;i<row_list.length;i++){
 				row = row_list[i]
 				data_brush.push(d[row]['values'].split("_").map(Number))
+				data_export_brush.push(d[row])
 
 				if (row < kmer_size[0]){
 					data_brush_kmer1.push(d[row]['values'].split("_").map(Number))
@@ -1372,11 +1383,11 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-						data_export.splice(index,1)
+						data_export_click.splice(index,1)
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))
-						data_export.push(d[row])		
+						data_export_click.push(d[row])		
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -1396,12 +1407,12 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-						data_export.splice(index,1)
+						data_export_click.splice(index,1)
 	
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))		
-						data_export.push(d[row])
+						data_export_click.push(d[row])
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -1424,11 +1435,11 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-						data_export.splice(index,1)
+						data_export_click.splice(index,1)
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))		
-						data_export.push(d[row])
+						data_export_click.push(d[row])
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -1454,11 +1465,11 @@ function add_signal(row, kmer_list){
 						index = data_row.indexOf(row)
 						data_row.splice(index, 1)
 						data_click.splice(index, 1)
-						data_export.splice(index,1)
+						data_export_click.splice(index,1)
 				} else {
 						data_row.push(row)
 						data_click.push(d[row]['values'].split("_").map(Number))
-						data_export.push(d[row])		
+						data_export_click.push(d[row])		
 				}
 				
 				draw_signal(data_click, data_hover, data_brush)
@@ -1559,6 +1570,7 @@ function add_signal_hover(row, kmer_list){
 		}
 	}
 }
+
 function remove_signal_hover(){
 	
 	data_hover = []
@@ -1594,7 +1606,7 @@ function draw_boxplot(data, form_val) {
 	var w = 580
 	var h = 7500*data.length /kmer_number
 	var margin = {
-	    top: 20,
+	    top: 40,
 	    bottom: 20,
 	    left: 20,
 	    right: 30
@@ -1619,8 +1631,16 @@ function draw_boxplot(data, form_val) {
 	var xScale = d3.scaleLinear()
 		.domain([0,8000])
 		.range([margin.left, w- margin.right-50])
-	
-	
+	/*
+	var x = d3.scaleLinear()
+		  .domain([ 0,2500 ])          
+		  .range([0, width])
+	*/
+		
+	var xAxis = d3.axisTop() 
+					.scale(xScale)
+		      		.tickSize(5)
+
 	var yScale = d3.scalePoint()
 			.domain(kmerValues)
 			.range([margin.top,h - margin.bottom])
@@ -1631,10 +1651,18 @@ function draw_boxplot(data, form_val) {
 
 				//.tickValues(catValues)
 					//.tickValues(kmerValues)
-								
+	
 	d3.select('svg')
 		.append('g')
 			.style("font", "14px times")
+			.attr('transform', 'translate(40,20)')
+			.attr('id', 'xAxisG')
+			.call(xAxis)
+
+	d3.select('svg')
+		.append('g')
+			.style("font", "14px times")
+			.style("font-weight", "bold")
 			.attr('transform', 'translate(0,0)')
 			.attr('id', 'yAxisG')
 			.call(yAxis)
@@ -1649,8 +1677,7 @@ function draw_boxplot(data, form_val) {
 		.append('g')
 		.attr('class', 'box')
 		.attr(
-		//	'transform', d => `translate(${xScale(d[medianVariable])},${yScale(d['kmer'])})`
-			'transform', d => `translate(${100},${yScale(d['kmer'])})`
+			'transform', d => `translate(${xScale(d[medianVariable])+40},${yScale(d['kmer'])})`
 		)
 		
 		.each(function(d, i) {
@@ -1658,10 +1685,10 @@ function draw_boxplot(data, form_val) {
 		        .append('rect')
 		        .attr('class', 'cover')
 		        .attr('id', d['kmer']+'_box')
-		        .attr('x', -100)
+		        .attr('x', -150)
 		        .attr('y', -10)
 		        .attr('height', 20)
-		        .attr('width', 480)
+		        .attr('width', 800)
 		        .style('fill', 'white')
 		        .style('stroke', 'black')
 		        .style('stroke-width', '1px')
@@ -1835,7 +1862,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 
 		data = clicked_data
 		kmerValues = clicked_kmers
-		var w = 350
+		var w = 580
 		var h = 7500*clicked_data.length /kmer_number
 		var margin = {
 		    top: 20,
@@ -1890,9 +1917,12 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 	
 	d3.select('.viewport_selected').select('svg')
 		.append('g')
-		.attr('transform', 'translate(300,0)')
+		.style("font", "14px times")
+		.style("font-weight", "bold")
+		.attr('transform', 'translate(0,0)')
 		.attr('id', 'yAxisG')
 		.call(yAxis)
+
 	d3.select('.viewport_selected').select('svg')
 		.selectAll('g.box')
 		.data(data)
@@ -1900,14 +1930,14 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 		.append('g')
 		.attr('class', 'box')
 		.attr(
-			'transform', d => `translate(${xScale(d[medianVariable])},${yScale(d['kmer'])})`
+			'transform', d => `translate(${xScale(d[medianVariable])+40},${yScale(d['kmer'])})`
 		)
 		
 		.each(function(d, i) {
 			d3.select(this)
 		        .append('rect')
 		        //.attr('class', 'cover')
-		        .attr('x', xScale(d[minVariable]) - xScale(d[medianVariable]))
+		        .attr('x', -150)
 		        .attr('y', -10)
 		        .attr('height', 20)
 		        .attr('width', 480)
@@ -1953,7 +1983,10 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 					    .style('stroke-width', 3)
 						.style('opacity', 0.4)
 					*/
-					
+					d3.select(this)
+						.style('stroke', 'black')
+					    .style('stroke-width', 3)
+						
 					draw_signal(data_click,data_hover = data_brush_byKmer[d.kmer] , data_brush)
 					
 				})
@@ -1966,7 +1999,11 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 						.style('opacity', previous_opacity)
 						.style('stroke', 'none')
 					*/
+					d3.select(this)
+						
+						.style('stroke', 'none')
 					draw_signal(data_click,data_hover = [] , data_brush)
+
 				})
 				
 			d3.select(this)
@@ -2032,7 +2069,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 			        .attr('x2', 0)
 			        .attr('y1', -10)
 			        .attr('y2', 10)
-			        .style('stroke', 'darkgray')
+			        .style('stroke', '#852121')
 			        .style('stroke-width', '4px')
 		})
 	})
@@ -2113,6 +2150,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 		max_signal_length = data[0]['max_length']
 			
 		 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
+		 data_export = data_export_click.concat(data_export_brush)
 		 array_export = data_export.map(function(obj) {
 			return Object.keys(obj).sort().map(function(key) { 
 			return obj[key];
