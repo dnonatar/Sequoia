@@ -103,7 +103,19 @@
 		            border-radius: 4px;
 		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
 			    }
-		
+				
+				.zoomin_button {
+					position: absolute;
+					top: 450px;
+	            	left: 930px;
+				}
+
+				.zoomout_button {
+					position: absolute;
+					top: 450px;
+	            	left: 1000px;
+				}
+
 				.normalize_checkbox {
 					position: absolute;
 					top: 500px;
@@ -194,15 +206,19 @@
 	<p><b>Selected k-mers (up to 4)</b></p>
 </div>
 <div class = "viewport_selected"></div>
-<div class = "tsne", id="tsnee">
-<!--<svg width="500" height="500">
-  <rect width="400" height="400" style="fill:none;stroke-width:1;stroke:rgb(0,0,0)" />
-</svg>-->
-</div>
+<div class = "tsne"></div>
 <div class = "raw_signal"></div>
 
+<div class = "zoomin_button">
+	<button onclick = "zoom_in()"> Zoom in </button>
+</div>
+
+<div class = "zoomout_button">
+	<button onclick = "zoom_out()"> Zoom out </button>
+</div>
+
 <div class = "export_button">
-	<button onclick="download_csv()">Download CSV</button> (export clicked points)
+	<button onclick="download_csv()">Download CSV</button> (export selected points)
 </div>
 
 <!--<div class = "reset_button">
@@ -360,7 +376,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		        .attr("transform", "translate(12,-7)rotate(-90)");
 
 		// Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis.
-		console.log(box_data.length) 
+		
 		var y = d3.scaleBand()
 			.domain(kmerValues)
 		    //.range([ 0, height ])
@@ -576,7 +592,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 
 		// set the dimensions and margins of the graph
 		var margin = {top: 10, right: 20, bottom: 30, left: 60},
-		    width = 360 - margin.left - margin.right,
+		    width = 460 - margin.left - margin.right,
 		    height = 280 
 
 		// append the svg object to the body of the page
@@ -747,7 +763,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				})
 				*/
 			
-			/*
+			
 			mybox = d3.select('.viewport_selected').select('svg').select('g')
 
 			mybox.selectAll('circle')
@@ -759,9 +775,9 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				.append('circle')
 				.attr('cx', function(d){ return x(d.median)})
 				.attr('r', 4)
-				.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+				.attr('transform', 'translate(' + 0 + ',' + 30 + ')' )
 				.style('fill', 'white')
-			*/
+			
 			/*
 			mybox.selectAll('.violin_median').select('rect')
 				.data(box_data)
@@ -936,8 +952,8 @@ function handleType(event){
 }
 	
 var opt = {} // epsilon is learning rate (10 = default)
-opt.epsilon = 10;
-opt.perplexity = 35;
+opt.epsilon = 200;
+opt.perplexity = 20;
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
 
@@ -964,6 +980,7 @@ var x_axis = d3.axisBottom()
                    .scale(xScale_tsne);  
 
 d3.select("#tsne").append("g")
+		.attr("class", "x_axis_tsne")
 	 	.attr("transform", "translate(0,360)")
 		.call(x_axis);
 
@@ -976,6 +993,7 @@ var y_axis = d3.axisLeft()
            .scale(yScale_tsne);  
 
 d3.select("#tsne").append("g")
+		.attr("class", "y_axis_tsne")
 	 	.attr("transform", "translate(40,0)")
 		.call(y_axis);
 
@@ -984,204 +1002,236 @@ d3.select("#tsne").append("text")
 		.style("text-anchor","middle")
 		.text("t-SNE 2")
 
+var x0_tsne;
+var y0_tsne;
+var brush;
 // function for drawing t-sne
 function draw_tsne(position, kmer_list, kmer_size) {
-		var width = 500;
-		var height = 400;
-		//var padding = 65;
-		
-		d3.select('#tsne').remove()
-		var svg = d3.select('.tsne')
-				.append('svg')
-				.attr("width", width)
-        		.attr("height", height)
-				.attr("id", "tsne")		
+	var width = 500;
+	var height = 400;
+	//var padding = 65;
+	
+	d3.select('#tsne').remove()
+	var svg = d3.select('.tsne')
+			.append('svg')
+			.attr("width", width)
+    		.attr("height", height)
+			.attr("id", "tsne")		
 
-		var xScale = d3.scaleLinear()
-				.domain(d3.extent(position, function(d) {return d[0];	}))	
-				//.range([padding,width - padding * 2])	
-				.range([40,width-20])
-				.nice();
+	//var xScale = d3.scaleLinear()
+	x0_tsne = d3.extent(position, function(d) {return d[0]; })
+	xScale_tsne.domain(x0_tsne)	
+			//.range([padding,width - padding * 2])	
+			.range([40,width-20])
+			.nice();
 
-		var yScale = d3.scaleLinear()
-				.domain(d3.extent(position, function(d) {return d[1]; }))
-				//.range([height - padding, padding])
-				//.range([20, height-40])
-				.range([height-40, 20])
-				.nice();
+	//var yScale = d3.scaleLinear()
+	y0_tsne = d3.extent(position, function(d) {return d[1]; })
+	yScale_tsne.domain(y0_tsne)
+			//.range([height - padding, padding])
+			//.range([20, height-40])
+			.range([height-40, 20])
+			.nice();
 
-		var x_axis = d3.axisBottom()
-                   .scale(xScale);  
+	var x_axis = d3.axisBottom()
+               .scale(xScale_tsne);  
 
-		svg.append("g")
-			 	.attr("transform", "translate(0,360)")
-       			.call(x_axis);
+	svg.append("g")
+			.attr("class", "x_axis_tsne")
+		 	.attr("transform", "translate(0,360)")
+   			.call(x_axis);
 
-		svg.append("text")
-				.attr("transform", "translate(255,395)")
-				.style("text-anchor","middle")
-				.text("t-SNE 1")
+	svg.append("text")
+			.attr("transform", "translate(255,395)")
+			.style("text-anchor","middle")
+			.text("t-SNE 1")
 
-		var y_axis = d3.axisLeft()
-                   .scale(yScale);  
+	var y_axis = d3.axisLeft()
+               .scale(yScale_tsne);  
 
-		svg.append("g")
-			 	.attr("transform", "translate(40,0)")
-       			.call(y_axis);
+	svg.append("g")
+			.attr("class", "y_axis_tsne")
+		 	.attr("transform", "translate(40,0)")
+   			.call(y_axis);
 
-		svg.append("text")
-				.attr('transform', 'translate(15,190)rotate(-90)')
-				.style("text-anchor","middle")
-				.text("t-SNE 2")
+	svg.append("text")
+			.attr('transform', 'translate(15,190)rotate(-90)')
+			.style("text-anchor","middle")
+			.text("t-SNE 2")
 
-		var brush = d3.brush()
-					//.extent([[0, 0], [100, 100]])
-					//.on("brush", highlightBrushedCircles)
-					//.on("end", endBrush)
-					.on("brush", whileBrush);
-		d3.select('#tsne').append("g")
-				.call(brush)
-				.call(brush.move)
+	brush = d3.brush()
+				.on("brush", whileBrush)
+				
 
-		var old_color = null
-		var circles = svg.append("g")
-				.selectAll('circle')
-			  .data(position)
-			  .enter()
-			  .append('circle')
-				.attr('x', function(d) {
-						return xScale(d[0]);
-				})	
-				.attr('y', function(d) {
-						return yScale(d[1]);
-				})
-				.attr('r', 6)
-				.attr('cx', function(d) {
-						return xScale(d[0]);
-				})
-				.attr('cy', function(d) {
-						return yScale(d[1]);
-				})
-				.attr("class", "non_brushed")
-				.style('fill', function(d,i) { 
-					if (kmer_list.length == 1) {
+	d3.select('#tsne').append("g")
+			.call(brush)
+			.call(brush.move)
+
+	var old_color = null
+	var circles = svg.append("g")
+			.selectAll('circle')
+		  .data(position)
+		  .enter()
+		  .append('circle')
+		  	.attr('r', 6)
+			.attr('cx', function(d) {
+					return xScale_tsne(d[0]);
+			})
+			.attr('cy', function(d) {
+					return yScale_tsne(d[1]);
+			})
+			.attr("class", "non_brushed")
+			.style('fill', function(d,i) { 
+				if (kmer_list.length == 1) {
+					return tsne_colors[0];
+				
+				} else if (kmer_list.length == 2) {	
+					if (i < kmer_size[0]) {
 						return tsne_colors[0];
-					
-					} else if (kmer_list.length == 2) {	
-						if (i < kmer_size[0]) {
-							return tsne_colors[0];
-						} else {
-							return tsne_colors[1];
-						}
-					} else if (kmer_list.length == 3) {
-						if (i < kmer_size[0]) {
-							return tsne_colors[0];
-						} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
-							return tsne_colors[1];
-						} else {
-							return tsne_colors[2];
-						}
-					} else if (kmer_list.length == 4) {
-							if (i < kmer_size[0]) {
-							return tsne_colors[0];
-						} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
-							return tsne_colors[1];
-						} else if(i >= kmer_size[0]+kmer_size[1] && i < kmer_size[0]+kmer_size[1]+kmer_size[2]) {
-							return tsne_colors[2];
-						} else {
-							return tsne_colors[3];
-						}
+					} else {
+						return tsne_colors[1];
 					}
-				})
-				
-				.on('click',function(d,i){
-					if (d3.select(this).style("stroke") == "none") {
-						d3.select(this).style("stroke", "black");
-						d3.select(this).style("stroke-width", 2);
-					}	else {
-						d3.select(this).style("stroke", "none");
+				} else if (kmer_list.length == 3) {
+					if (i < kmer_size[0]) {
+						return tsne_colors[0];
+					} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
+						return tsne_colors[1];
+					} else {
+						return tsne_colors[2];
 					}
-					
-					add_signal(i, kmer_list);
-												
-				})
+				} else if (kmer_list.length == 4) {
+						if (i < kmer_size[0]) {
+						return tsne_colors[0];
+					} else if(i >= kmer_size[0] && i < kmer_size[0]+kmer_size[1]) {
+						return tsne_colors[1];
+					} else if(i >= kmer_size[0]+kmer_size[1] && i < kmer_size[0]+kmer_size[1]+kmer_size[2]) {
+						return tsne_colors[2];
+					} else {
+						return tsne_colors[3];
+					}
+				}
+			})
+			
+			.on('click',function(d,i){
+				if (d3.select(this).style("stroke") == "none") {
+					d3.select(this).style("stroke", "black");
+					d3.select(this).style("stroke-width", 2);
+				}	else {
+					d3.select(this).style("stroke", "none");
+				}
 				
+				add_signal(i, kmer_list);
+											
+			})
+			
+			
+			.on('mouseover', function(d,i){
+				old_color = d3.select(this).style("fill")
+				d3.select(this).attr("r", "10");
+				d3.select(this).style("fill", "#ff0000")
+				add_signal_hover(i, kmer_list);
+			})
+			.on('mouseout', function(d,i){
+				d3.select(this).attr("r", "6");
+				d3.select(this).style("fill", old_color)
+				remove_signal_hover();
+			})
+			
+	
+	function highlightBrushedCircles() {
+    if (d3.event.selection != null) {
+       // revert circles to initial style
+       circles.attr("class", "non_brushed");
+       var brush_coords = d3.brushSelection(this);
+       // style brushed circles
+       circles.filter(function (){
+       						var cx = d3.select(this).attr("cx"),
+                      cy = d3.select(this).attr("cy");
+                  return isBrushed(brush_coords, cx, cy);
+              })
+              .attr("class", "brushed");
 				
-				.on('mouseover', function(d,i){
-					old_color = d3.select(this).style("fill")
-					d3.select(this).attr("r", "10");
-					d3.select(this).style("fill", "#ff0000")
-					add_signal_hover(i, kmer_list);
-				})
-				.on('mouseout', function(d,i){
-					d3.select(this).attr("r", "6");
-					d3.select(this).style("fill", old_color)
-					remove_signal_hover();
-				})
-				
-		
-		function highlightBrushedCircles() {
-        if (d3.event.selection != null) {
-           // revert circles to initial style
-           circles.attr("class", "non_brushed");
-           var brush_coords = d3.brushSelection(this);
-           // style brushed circles
-           circles.filter(function (){
-           						var cx = d3.select(this).attr("cx"),
-                          cy = d3.select(this).attr("cy");
-                      return isBrushed(brush_coords, cx, cy);
-                  })
-                  .attr("class", "brushed");
-					
-         }
+     }
+	}
+
+	var lastBrushEvent = 0;
+
+	
+	
+	function whileBrush() {
+		// disregard brushes w/o selections				
+		if (!d3.event.selection) {
+			return;
+		}
+		// programmed clearing of brush after mouse-up
+		//d3.select(this).call(brush.move, null);
+			
+		if (d3.event.selection != null) {
+			s = d3.event.selection
+			
+			// revert circles to initial style
+			circles.attr("class", "non_brushed");
+			var brush_coords = d3.brushSelection(this);
+			
+			// style brushed circles
+			circles.filter(function (){
+				var cx = d3.select(this).attr("cx"),
+				cy = d3.select(this).attr("cy");
+				return isBrushed(brush_coords, cx, cy);
+			})
+			.attr("class", "brushed");
+		} else {
+			console.log("no select brush")
 		}
 
-		var lastBrushEvent = 0;
+		// get indices for the brushed points
+		var d_brushed =  d3.selectAll(".brushed").data();
 
-		function whileBrush() {
-			// disregard brushes w/o selections				
-			if (!d3.event.selection) return;
-			// programmed clearing of brush after mouse-up
-			//d3.select(this).call(brush.move, null);
-				
-			if (d3.event.selection != null) 
+		var row_list = []				
+		if (d_brushed.length > 0 && row_list.length ==0) 
+		{
+			d_brushed.forEach(d_each => row_list.push(position.indexOf(d_each)))
+		}
+		
+		(function(row_list, kmer_list, brushEvent) {
+			setTimeout(function() 
 			{
-				// revert circles to initial style
-				circles.attr("class", "non_brushed");
-				var brush_coords = d3.brushSelection(this);
-				
-				// style brushed circles
-				circles.filter(function (){
-					var cx = d3.select(this).attr("cx"),
-					cy = d3.select(this).attr("cy");
-					return isBrushed(brush_coords, cx, cy);
-				})
-				.attr("class", "brushed");
-			}
-
-			// get indices for the brushed points
-			var d_brushed =  d3.selectAll(".brushed").data();
-
-			var row_list = []				
-			if (d_brushed.length > 0 && row_list.length ==0) 
-			{
-				d_brushed.forEach(d_each => row_list.push(position.indexOf(d_each)))
-			}
-			
-			(function(row_list, kmer_list, brushEvent) {
-				setTimeout(function() 
+				if (brushEvent == lastBrushEvent) {
+					add_signal_brush(row_list, kmer_list)
+				}
+				else
 				{
-					if (brushEvent == lastBrushEvent) {
-						add_signal_brush(row_list, kmer_list)
-					}
-					else
-					{
-						console.log("SAVED loading");
-					}
-				}, 2);
+					console.log("SAVED loading");
+				}
+			}, 2);
 
-			})(row_list, kmer_list, ++lastBrushEvent)
-		}		
+		})(row_list, kmer_list, ++lastBrushEvent)
+	}		
+}
+
+var s;
+var idleTimeout, idleDelay = 350;
+
+function zoom_in() {
+	xScale_tsne.domain([s[0][0], s[1][0]].map(xScale_tsne.invert, xScale_tsne));
+	yScale_tsne.domain([s[1][1], s[0][1]].map(yScale_tsne.invert, yScale_tsne));
+	zoom_tsne()
+}
+
+function zoom_out() {
+	xScale_tsne.domain(x0_tsne);
+	yScale_tsne.domain(y0_tsne);
+	zoom_tsne()
+}
+
+function zoom_tsne() {
+	svg = d3.select('.tsne')
+	var t = svg.transition().duration(750);
+	svg.select(".x_axis_tsne").transition(t).call(x_axis);
+	svg.select(".y_axis_tsne").transition(t).call(y_axis);
+	svg.selectAll("circle").transition(t)
+	  .attr("cx", function(d) { return xScale_tsne(d[0]); })
+	  .attr("cy", function(d) { return yScale_tsne(d[1]); });
 }
 
 function isBrushed(brush_coords, cx, cy) {
@@ -1533,13 +1583,13 @@ function add_signal_hover(row, kmer_list){
 		current_kmer = kmer1+'_'+kmer2+'_'+kmer3
 		signalToAdd = current_kmer + '_' + row;
 		function add(error, file1, file2, file3){
-				d = file1.concat(file2).concat(file3)
-						d3.selectAll('.line_hover').remove();
-						if (signalToAdd == current_kmer + '_' + row)
-						{
-							data_hover.push(d[row]['values'].split("_").map(Number))
-							draw_signal(data_click, data_hover, data_brush)
-						}
+			d = file1.concat(file2).concat(file3)
+			d3.selectAll('.line_hover').remove();
+			if (signalToAdd == current_kmer + '_' + row)
+			{
+				data_hover.push(d[row]['values'].split("_").map(Number))
+				draw_signal(data_click, data_hover, data_brush)
+			}
 		}
 	} else if (kmer_list.length == 4) {
 		kmer1 = kmer_list[0]
@@ -1560,13 +1610,13 @@ function add_signal_hover(row, kmer_list){
 		current_kmer = kmer1+'_'+kmer2+'_'+kmer3+'_'+kmer4
 		signalToAdd = current_kmer + '_' + row;
 		function add(error, file1, file2, file3, file4){
-				d = file1.concat(file2).concat(file3).concat(file4)
-						d3.selectAll('.line_hover').remove();
-						if (signalToAdd == current_kmer + '_' + row)
-						{
-							data_hover.push(d[row]['values'].split("_").map(Number))
-							draw_signal(data_click, data_hover, data_brush)
-						}
+			d = file1.concat(file2).concat(file3).concat(file4)
+			d3.selectAll('.line_hover').remove();
+			if (signalToAdd == current_kmer + '_' + row)
+			{
+				data_hover.push(d[row]['values'].split("_").map(Number))
+				draw_signal(data_click, data_hover, data_brush)
+			}
 		}
 	}
 }
@@ -1611,7 +1661,8 @@ function draw_boxplot(data, form_val) {
 	    left: 20,
 	    right: 30
   	}
-
+  	console.log(data.length)
+  	console.log(kmer_number)
 	d3.select('.viewport')
     	.append('svg')
 		    .attr('height', h)
@@ -1946,6 +1997,14 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 		        .style('stroke-width', '1px')
 				.style('opacity', 0.3)
 				.on("click", function(d) {
+					// remove signal plots
+					d3.selectAll('.line_click').remove()
+					d3.selectAll('.line_hover').remove()
+					d3.selectAll('.line_brush').remove()
+					data_click = []
+					data_hover = []
+					data_brush_byKmer = {}
+
 					box_colors.push(d3.select(this).style("fill"))
 					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
 					index = kmer_list.indexOf(d.kmer)
@@ -1983,12 +2042,16 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 					    .style('stroke-width', 3)
 						.style('opacity', 0.4)
 					*/
+
 					d3.select(this)
 						.style('stroke', 'black')
 					    .style('stroke-width', 3)
-						
-					draw_signal(data_click,data_hover = data_brush_byKmer[d.kmer] , data_brush)
-					
+
+					// Execute only if there is an element in brush (to avoid throwing error)   
+					if (!jQuery.isEmptyObject(data_brush_byKmer)) {
+						data_hover = data_brush_byKmer[d.kmer] 	
+						draw_signal(data_click,data_hover, data_brush)
+					}
 				})
 
 				
@@ -2077,8 +2140,8 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 
 // a function to download a csv file, given an array of arrays (array_export)
 function download_csv() {
-							
-    var csv = 'kmer,read_ID,values\n';
+	console.log(array_export)					
+    var csv = 'kmer,length,read_ID,values\n';
     array_export.forEach(function(row) {
 	    csv += row.join(',');
 	    csv += "\n";
@@ -2241,14 +2304,21 @@ function draw_signal(data_click,data_hover, data_brush) {
     	// do this AFTER the axes above so that the line is above the tick-lines
 				
 		// signal plots for the clicked points
-    	for (var i = data_click.length - 1; i >= 0; i--) {
-    	    graph.append("svg:path")
-					.attr("d", line(data_click[i]))
-					.attr("class","line_click")
-					.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
-					.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
-		};  
-				
+		graph.selectAll(".line")
+			.data(data_click)
+			.enter().append("svg:path")
+						.attr("d", line)
+						.attr("class","line_click")
+						.attr('transform', function(d) {
+	    						if (d3.select("#normalize_checkbox").property("checked")) {
+	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+	    						}
+	    						else {
+	    							return null;
+	    						}
+	    					})
+	    					.attr('vector-effect', 'non-scaling-stroke')	
+
 		// signal plot for the hovered point				
 		graph.selectAll(".line")
 			.data(data_hover)
