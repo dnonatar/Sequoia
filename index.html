@@ -104,6 +104,12 @@
 		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
 			    }
 				
+				.perplexity_value {
+					position: absolute;
+					top: 400px;
+	            	left: 930px;
+				}
+
 				.zoomin_button {
 					position: absolute;
 					top: 450px;
@@ -209,6 +215,11 @@
 <div class = "tsne"></div>
 <div class = "raw_signal"></div>
 
+<div class="perplexity_value">
+    <div class="col-sm-2"><p id="value-simple"></p></div>
+    <div class="col-sm"><div id="slider-simple"></div></div>
+ </div>
+
 <div class = "zoomin_button">
 	<button onclick = "zoom_in()"> Zoom in </button>
 </div>
@@ -235,57 +246,42 @@ var tsne_colors = []
 var folder = 'data'
 var kmer_number = null
 
-function reset() {
-	d3.select("").selectAll('*').remove()
-}
-
 // On landing page, use 'data' as a default folder
 d3.csv('data'+'/boxplot_data.csv', function(data) {
 	kmer_number = data.length
-	function changeBoxplot(){
-		d3.select(".viewport").selectAll("*").remove()
-		var form = document.getElementById("sort")
-		var form_val;
-		for(var i=0; i<form.length; i++){
-		  if(form[i].checked){
-		    form_val = form[i].id;}} 
-		
-		draw_boxplot(data, form_val)
-	}	
 
-	//when changing sorting option
-	var dataSort = d3.select("#sort")
-	dataSort.on("change", function(){
-		var sect = document.getElementById("plot_type");
-		var section = sect.options[sect.selectedIndex].value;
-
-		if (section == 'violin') {
-			draw_violin(filtered_data_violin=[],filtered_data_box=[]);
-		} else {
-			changeBoxplot();			
-		}
-
-	})
-
-	draw_boxplot(data, 'kmer')
-
-	// When changing plot type
-	d3.select(".plot_type").on("change",function(){
-		
-		var sect = document.getElementById("plot_type");
-		var section = sect.options[sect.selectedIndex].value;
-		
-		if (section == 'violin') {
-			draw_violin(filtered_data_violin=[],filtered_data_box=[]);
-			draw_clicked_violin(kmer_list, tsne_colors);
-		} else {
-			changeBoxplot();
-			draw_clicked_boxplot(kmer_list, tsne_colors)			
-		}
-	})
-
+	// draw the boxplots on landing page
+	draw_boxplot(data)
 })
 
+// When changing plot type
+d3.select(".plot_type").on("change",function(){
+	
+	var sect = document.getElementById("plot_type");
+	var section = sect.options[sect.selectedIndex].value;
+	
+	if (section == 'violin') {
+		draw_violin(filtered_data_violin=[],filtered_data_box=[]);
+		draw_clicked_violin(kmer_list, tsne_colors);
+	} else {
+		draw_boxplot(data=[]);
+		draw_clicked_boxplot(kmer_list, tsne_colors)			
+	}
+})
+
+//when changing sorting option
+var dataSort = d3.select("#sort")
+dataSort.on("change", function(){
+	var sect = document.getElementById("plot_type");
+	var section = sect.options[sect.selectedIndex].value;
+
+	if (section == 'violin') {
+		draw_violin(filtered_data_violin=[],filtered_data_box=[]);
+	} else {
+		draw_boxplot(data=[]);			
+	}
+
+})
 
 function draw_violin(filtered_data_violin, filtered_data_box) {
 
@@ -384,6 +380,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
 		  svg.append("g")
 		  	 .style("font", "14px times")
+		  	 .style("font-weight", "bold")
 		    .attr("transform", "translate(" + 0 +","+0+ ")")
 		    .call(d3.axisLeft(y))
 
@@ -461,6 +458,15 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 	        .style('stroke-width', '1px')
 			.style('opacity', 0)
 			.on("click", function(d) {
+				// remove signal plots
+					d3.selectAll('.line_click').remove()
+					d3.selectAll('.line_hover').remove()
+					d3.selectAll('.line_brush').remove()
+					data_click = []
+					data_hover = []
+					data_brush = []
+					data_brush_byKmer = {}
+
 				if(kmer_list.length < 4 && kmer_list.includes(d.key)==false) {				
 				
 					d3.select('#tsne').selectAll('circle').remove()	
@@ -627,6 +633,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
 		  svg.append("g")
 		  	 .style("font", "14px times")
+		  	 .style("font-weight", "bold")
 		    .attr("transform", "translate(" + 0 +","+0+ ")")
 		    .call(d3.axisLeft(y))
 
@@ -694,6 +701,15 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				.style('opacity', 0.5)
 				
         		.on("click", function(d) {
+        			// remove signal plots
+					d3.selectAll('.line_click').remove()
+					d3.selectAll('.line_hover').remove()
+					d3.selectAll('.line_brush').remove()
+					data_click = []
+					data_hover = []
+					data_brush = []
+					data_brush_byKmer = {}
+
 					box_colors.push(d3.select(this).style("fill"))
 					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
 					index = kmer_list.indexOf(d.key)
@@ -802,53 +818,16 @@ function draw_clicked_violin(clicked_kmers, colors) {
 function handleFolder(event){
 	folder = document.getElementById("folder").value
 	d3.select(".tsne").selectAll('.circle').remove()
-	d3.select(".viewport").selectAll("*").remove()
-
+	
+	// Draw boxplots on landing page right after choosing a new folder
 	d3.csv(folder+'/boxplot_data.csv', function(data) {
-		function changeBoxplot(){
-			d3.select(".viewport").selectAll("*").remove()
-			var form = document.getElementById("sort")
-			var form_val;
-			for(var i=0; i<form.length; i++){
-  		  		if(form[i].checked){
-  		    		form_val = form[i].id;
-  		    	}
-  			} 
-			
-			draw_boxplot(data, form_val)
-
-		}
-
-		// change sort type	
-		var dataSort = d3.select("#sort")
-		dataSort.on("change", function(){
-		var sect = document.getElementById("plot_type");
-		var section = sect.options[sect.selectedIndex].value;
-
-		if (section == 'violin') {
-			draw_violin(filtered_data_violin=[],filtered_data_box=[]);
-		} else {
-			changeBoxplot();
-		}
-
-	})
-		// get the sort type before plotting the boxplots
-		var form = document.getElementById("sort")
-		var form_val;
-		for(var i=0; i<form.length; i++){
-	  		if(form[i].checked){
-	    		form_val = form[i].id;
-	    	}
-		} 
-
-		draw_boxplot(data, form_val)
+		draw_boxplot(data)
 	})
 
 	return false;
 }
 
 function handleType(event){
-
 	
 	text = document.getElementById("myVal1").value
 	if (text.length == 0) {
@@ -933,15 +912,11 @@ function handleType(event){
 					
 				
 		// remove and redraw 
-		d3.select(".viewport").selectAll("*").remove()
+		
 		if (section == 'box') {
-			
-			draw_boxplot(filtered_data_box, form_val)
-			
+			draw_boxplot(filtered_data_box)
 		} else if (section == 'violin') {
-
 			draw_violin(filtered_data_violin, filtered_data_box)
-			
 		}
 	
 	}
@@ -952,8 +927,8 @@ function handleType(event){
 }
 	
 var opt = {} // epsilon is learning rate (10 = default)
-opt.epsilon = 200;
-opt.perplexity = 20;
+opt.epsilon = 100;
+opt.perplexity = 10;
 var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
 
@@ -1635,256 +1610,285 @@ var div = d3.select("body").append("div")
 box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]  //reset when changing sort type
 
 kmer_list = []
-function draw_boxplot(data, form_val) {
+function draw_boxplot(passed_data) {
+	file1 = './'+folder+'/boxplot_data.csv'
+	queue()
+		.defer(d3.csv, file1)
+		.await(get_box)
+
+	function get_box(error, file1) {
+		d3.select(".viewport").selectAll("*").remove()
+
+		data = file1
 		
-	if (form_val == 'sort_median') {
-		data.sort(function(a,b) {
-			return b['median'] - a['median'];
-		});
-	} else if (form_val == 'sort_kmer') {
-		data.sort(function(a,b) {
-			var x = a['kmer'].toLowerCase();
-			var y = b['kmer'].toLowerCase();
-			return x < y ? -1 : x > y ? 1 : 0;
-		});
-	} else if (form_val == 'sort_max') {
-		data.sort(function(a,b) {
-			return b['max'] - a['max'];
-		});
-	}
+		if (passed_data.length != 0){ 
+			data = passed_data
+		}
 		
-	var w = 580
-	var h = 7500*data.length /kmer_number
-	var margin = {
-	    top: 40,
-	    bottom: 20,
-	    left: 20,
-	    right: 30
-  	}
-  	console.log(data.length)
-  	console.log(kmer_number)
-	d3.select('.viewport')
-    	.append('svg')
-		    .attr('height', h)
-		    .attr('width', w)
-		    //.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+		// get sorting option
+		var form = document.getElementById("sort")
+		var form_val;
+		for(var i=0; i<form.length; i++){
+		  if(form[i].checked){
+		    form_val = form[i].id;}} 
 
-
-	var catVariable = 'order'
-	var catValues = data.map(d => Number(d[catVariable]))
-	var kmerValues = data.map(d => d['kmer'])
-	const minVariable = 'min'
-    const maxVariable = 'max'
-    const medianVariable = 'median'
-    const q1Variable = 'q1'
-    const q3Variable = 'q3'
-
-	var xScale = d3.scaleLinear()
-		.domain([0,8000])
-		.range([margin.left, w- margin.right-50])
-	/*
-	var x = d3.scaleLinear()
-		  .domain([ 0,2500 ])          
-		  .range([0, width])
-	*/
+		if (form_val == 'sort_median') {
+			data.sort(function(a,b) {
+				return b['median'] - a['median'];
+			});
+		} else if (form_val == 'sort_kmer') {
+			data.sort(function(a,b) {
+				var x = a['kmer'].toLowerCase();
+				var y = b['kmer'].toLowerCase();
+				return x < y ? -1 : x > y ? 1 : 0;
+			});
+		} else if (form_val == 'sort_max') {
+			data.sort(function(a,b) {
+				return b['max'] - a['max'];
+			});
+		}
 		
-	var xAxis = d3.axisTop() 
-					.scale(xScale)
-		      		.tickSize(5)
 
-	var yScale = d3.scalePoint()
-			.domain(kmerValues)
-			.range([margin.top,h - margin.bottom])
-	
-	var yAxis = d3.axisRight()
-					.scale(yScale)
-					.tickSize(0)
+		var w = 580
+		var h = 7500*data.length /kmer_number
+		var margin = {
+		    top: 40,
+		    bottom: 20,
+		    left: 20,
+		    right: 30
+	  	}
+	  	
+		d3.select('.viewport')
+	    	.append('svg')
+			    .attr('height', h)
+			    .attr('width', w)
+			    //.attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
-				//.tickValues(catValues)
-					//.tickValues(kmerValues)
-	
-	d3.select('svg')
-		.append('g')
-			.style("font", "14px times")
-			.attr('transform', 'translate(40,20)')
-			.attr('id', 'xAxisG')
-			.call(xAxis)
 
-	d3.select('svg')
-		.append('g')
-			.style("font", "14px times")
-			.style("font-weight", "bold")
-			.attr('transform', 'translate(0,0)')
-			.attr('id', 'yAxisG')
-			.call(yAxis)
+		var catVariable = 'order'
+		var catValues = data.map(d => Number(d[catVariable]))
+		var kmerValues = data.map(d => d['kmer'])
+		const minVariable = 'min'
+	    const maxVariable = 'max'
+	    const medianVariable = 'median'
+	    const q1Variable = 'q1'
+	    const q3Variable = 'q3'
 
-	var previous_color = null
-    var previous_opacity = null
+		var xScale = d3.scaleLinear()
+			.domain([0,8000])
+			.range([margin.left, w- margin.right-50])
+		/*
+		var x = d3.scaleLinear()
+			  .domain([ 0,2500 ])          
+			  .range([0, width])
+		*/
+			
+		var xAxis = d3.axisTop() 
+						.scale(xScale)
+			      		.tickSize(5)
 
-	d3.select('svg')
-		.selectAll('g.box')
-		.data(data)
-		.enter()		
-		.append('g')
-		.attr('class', 'box')
-		.attr(
-			'transform', d => `translate(${xScale(d[medianVariable])+40},${yScale(d['kmer'])})`
-		)
+		var yScale = d3.scalePoint()
+				.domain(kmerValues)
+				.range([margin.top,h - margin.bottom])
 		
-		.each(function(d, i) {
-			d3.select(this)
-		        .append('rect')
-		        .attr('class', 'cover')
-		        .attr('id', d['kmer']+'_box')
-		        .attr('x', -150)
-		        .attr('y', -10)
-		        .attr('height', 20)
-		        .attr('width', 800)
-		        .style('fill', 'white')
-		        .style('stroke', 'black')
-		        .style('stroke-width', '1px')
-				.style('opacity', 0)
-				.on("click", function(d) {
-									
-					if(kmer_list.length < 4 && kmer_list.includes(d.kmer)==false) {				
-					
-						d3.select('#tsne').selectAll('circle').remove()	
-						loading_gif()
-						
-						d3.select(this).style("opacity",0.3)
-						d3.select(this).style("stroke",'none')
-						d3.select(this).style("fill",box_colors[box_colors.length-1])
-						tsne_colors.push(box_colors[box_colors.length-1])	
-						box_colors.pop()
-						
-						// remove selected boxplot from the current viewport
-						index = kmerValues.indexOf(d.kmer)
-						kmerValues.splice(index, 1)
-						/*
-						filtered_data = []
-						for (i=0;i<data.length;i++) {
-							if(kmerValues.includes(data[i]['kmer']) ){
-								filtered_data.push(data[i])
-							}
-						}
-						*/
+		var yAxis = d3.axisRight()
+						.scale(yScale)
+						.tickSize(0)
 
-						// get sorting option
-						var form = document.getElementById("sort")
-						var form_val;
-						for(var i=0; i<form.length; i++){
-	      	  				if(form[i].checked){
-	      	    				form_val = form[i].id;
-							}
-						}
+					//.tickValues(catValues)
+						//.tickValues(kmerValues)
+		
+		d3.select('svg')
+			.append('g')
+				.style("font", "14px times")
+				.attr('transform', 'translate(40,20)')
+				.attr('id', 'xAxisG')
+				.call(xAxis)
 
-						//d3.select(".viewport").selectAll("*").remove()
-						kmer_list.push(d.kmer)
-						//draw_boxplot(filtered_data, form_val)						
-						draw_clicked_boxplot(kmer_list, tsne_colors)
-							
-						if (kmer_list.length == 1) {
-								combine_1_kmer(kmer_list)
-						} else if (kmer_list.length == 2) {
-								combine_2_kmers(kmer_list)
-						} else if (kmer_list.length == 3) {
-								combine_3_kmers(kmer_list)
-						} else if (kmer_list.length == 4) {
-								combine_4_kmers(kmer_list)
-						} else{
-								d3.select('#tsne').selectAll('circle').remove()
-						}
-					
-					previous_color = d3.select(this).style('fill')
-					previous_opacity = d3.select(this).style('opacity')
-					}
+		d3.select('svg')
+			.append('g')
+				.style("font", "14px times")
+				.style("font-weight", "bold")
+				.attr('transform', 'translate(0,0)')
+				.attr('id', 'yAxisG')
+				.call(yAxis)
 
-				})
+		var previous_color = null
+	    var previous_opacity = null
 
-        		
-				.on('mouseover', function(){
-					previous_color = d3.select(this).style('fill')
-					previous_opacity = d3.select(this).style('opacity')
-					d3.select(this)
-						.style('fill', 'white')
-				        .style('stroke', 'black')
-				        .style('stroke-width', 3)
-						.style('opacity', 0.4)
-				})
-				.on('mouseout', function(){
-					d3.select(this)
-						.style('fill', previous_color)
-						.style('opacity', previous_opacity)
-						.style('stroke', 'none')
-				        
-				})
-
-			d3.select(this)
-				.append('line')
-					.attr('class', 'range')
-					.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-			        .attr('y1', 0)
-			        .attr('y2', 0)
-			        .style('stroke', 'black')
-			        .style('stroke-width', '2px')
-			d3.select(this)
-		        .append('line')
-			        .attr('class', 'max')
-			        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-			        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
-			        .attr('y1', -8)
-			        .attr('y2', 8)
-			        .style('stroke', 'black')
-			        .style('stroke-width', '2px')			
-			d3.select(this)
-				.append('line')
-			        .attr('class', 'min')
-			        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
-			        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
-			        .attr('y1', -8)
-			        .attr('y2', 8)
-			        .style('stroke', 'black')
-			        .style('stroke-width', '2px')
-			d3.select(this)
-        		.append('rect')
-			        .attr('class', 'range')
-			        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
-			        .attr('y', -8)
-			        .attr('height', 16)
-			        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
+		d3.select('svg')
+			.selectAll('g.box')
+			.data(data)
+			.enter()		
+			.append('g')
+			.attr('class', 'box')
+			.attr(
+				'transform', d => `translate(${xScale(d[medianVariable])+40},${yScale(d['kmer'])})`
+			)
+			
+			.each(function(d, i) {
+				d3.select(this)
+			        .append('rect')
+			        .attr('class', 'cover')
+			        .attr('id', d['kmer']+'_box')
+			        .attr('x', -150)
+			        .attr('y', -10)
+			        .attr('height', 20)
+			        .attr('width', 800)
 			        .style('fill', 'white')
 			        .style('stroke', 'black')
-			        .style('stroke-width', '2px')
-				.on("mouseover", function(d) {
-		            div.transition()		
-		                .duration(200)		
-		                .style("opacity", 1);		
-		            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
-		                .style("left", (d3.event.pageX) + "px")		
-		                .style("top", (d3.event.pageY - 28) + "px");
-								d3.select(this).style('fill', '#ff0000')			
-     			})
-		.on("mouseout", function(d) {		
-            div.transition()		
-                .duration(500)		
-                .style("opacity", 0);
-			d3.select(this).style('fill', 'white')	
-        })
-			d3.select(this)
-		        .append('line')
-			        .attr('x1', 0)
-			        .attr('x2', 0)
-			        .attr('y1', -8)
-			        .attr('y2', 8)
-			        .style('stroke', '#852121')
-			        .style('stroke-width', '4px')
-		})
+			        .style('stroke-width', '1px')
+					.style('opacity', 0)
+					.on("click", function(d) {
+						// remove signal plots
+						d3.selectAll('.line_click').remove()
+						d3.selectAll('.line_hover').remove()
+						d3.selectAll('.line_brush').remove()
+						data_click = []
+						data_hover = []
+						data_brush = []
+						data_brush_byKmer = {}
 
-	for (i = 0; i<kmer_list.length; i++) {
-		d3.select('#'+kmer_list[i]+'_box').style('fill', tsne_colors[i])
-		d3.select('#'+kmer_list[i]+'_box').style('opacity', 0.3)
-		d3.select('#'+kmer_list[i]+'_box').style('stroke', 'none')
+						if(kmer_list.length < 4 && kmer_list.includes(d.kmer)==false) {				
+						
+							d3.select('#tsne').selectAll('circle').remove()	
+							loading_gif()
+							
+							d3.select(this).style("opacity",0.3)
+							d3.select(this).style("stroke",'none')
+							d3.select(this).style("fill",box_colors[box_colors.length-1])
+							tsne_colors.push(box_colors[box_colors.length-1])	
+							box_colors.pop()
+							
+							// remove selected boxplot from the current viewport
+							index = kmerValues.indexOf(d.kmer)
+							kmerValues.splice(index, 1)
+							/*
+							filtered_data = []
+							for (i=0;i<data.length;i++) {
+								if(kmerValues.includes(data[i]['kmer']) ){
+									filtered_data.push(data[i])
+								}
+							}
+							*/
+
+							// get sorting option
+							var form = document.getElementById("sort")
+							var form_val;
+							for(var i=0; i<form.length; i++){
+		      	  				if(form[i].checked){
+		      	    				form_val = form[i].id;
+								}
+							}
+
+							
+							kmer_list.push(d.kmer)
+													
+							draw_clicked_boxplot(kmer_list, tsne_colors)
+								
+							if (kmer_list.length == 1) {
+									combine_1_kmer(kmer_list)
+							} else if (kmer_list.length == 2) {
+									combine_2_kmers(kmer_list)
+							} else if (kmer_list.length == 3) {
+									combine_3_kmers(kmer_list)
+							} else if (kmer_list.length == 4) {
+									combine_4_kmers(kmer_list)
+							} else{
+									d3.select('#tsne').selectAll('circle').remove()
+							}
+						
+						previous_color = d3.select(this).style('fill')
+						previous_opacity = d3.select(this).style('opacity')
+						}
+
+					})
+
+	        		
+					.on('mouseover', function(){
+						previous_color = d3.select(this).style('fill')
+						previous_opacity = d3.select(this).style('opacity')
+						d3.select(this)
+							.style('fill', 'white')
+					        .style('stroke', 'black')
+					        .style('stroke-width', 3)
+							.style('opacity', 0.4)
+					})
+					.on('mouseout', function(){
+						d3.select(this)
+							.style('fill', previous_color)
+							.style('opacity', previous_opacity)
+							.style('stroke', 'none')
+					        
+					})
+
+				d3.select(this)
+					.append('line')
+						.attr('class', 'range')
+						.attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+				        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+				        .attr('y1', 0)
+				        .attr('y2', 0)
+				        .style('stroke', 'black')
+				        .style('stroke-width', '2px')
+				d3.select(this)
+			        .append('line')
+				        .attr('class', 'max')
+				        .attr('x1', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+				        .attr('x2', xScale(d[maxVariable]) - xScale(d[medianVariable]))
+				        .attr('y1', -8)
+				        .attr('y2', 8)
+				        .style('stroke', 'black')
+				        .style('stroke-width', '2px')			
+				d3.select(this)
+					.append('line')
+				        .attr('class', 'min')
+				        .attr('x1', xScale(d[minVariable]) - xScale(d[medianVariable]))
+				        .attr('x2', xScale(d[minVariable]) - xScale(d[medianVariable]))
+				        .attr('y1', -8)
+				        .attr('y2', 8)
+				        .style('stroke', 'black')
+				        .style('stroke-width', '2px')
+				d3.select(this)
+	        		.append('rect')
+				        .attr('class', 'range')
+				        .attr('x', xScale(d[q1Variable]) - xScale(d[medianVariable]))
+				        .attr('y', -8)
+				        .attr('height', 16)
+				        .attr('width', xScale(d[q3Variable]) - xScale(d[q1Variable]))
+				        .style('fill', 'white')
+				        .style('stroke', 'black')
+				        .style('stroke-width', '2px')
+					.on("mouseover", function(d) {
+			            div.transition()		
+			                .duration(200)		
+			                .style("opacity", 1);		
+			            div	.html('<strong>'+'median : '+'</strong>'+ d3.format(",.0f")(d.median) + "<br/>" +'<strong>'+'max : '+'</strong>'+d3.format(",.0f")(d.max) + "<br/>"  + '<strong>'+'min : '+'</strong>'+d3.format(",.0f")(d.min))	
+			                .style("left", (d3.event.pageX) + "px")		
+			                .style("top", (d3.event.pageY - 28) + "px");
+									d3.select(this).style('fill', '#ff0000')			
+	     			})
+			.on("mouseout", function(d) {		
+	            div.transition()		
+	                .duration(500)		
+	                .style("opacity", 0);
+				d3.select(this).style('fill', 'white')	
+	        })
+				d3.select(this)
+			        .append('line')
+				        .attr('x1', 0)
+				        .attr('x2', 0)
+				        .attr('y1', -8)
+				        .attr('y2', 8)
+				        .style('stroke', '#852121')
+				        .style('stroke-width', '4px')
+			})
+
+		for (i = 0; i<kmer_list.length; i++) {
+			d3.select('#'+kmer_list[i]+'_box').style('fill', tsne_colors[i])
+			d3.select('#'+kmer_list[i]+'_box').style('opacity', 0.3)
+			d3.select('#'+kmer_list[i]+'_box').style('stroke', 'none')
+		}
 	}
 }
 
@@ -2003,6 +2007,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 					d3.selectAll('.line_brush').remove()
 					data_click = []
 					data_hover = []
+					data_brush = []
 					data_brush_byKmer = {}
 
 					box_colors.push(d3.select(this).style("fill"))
@@ -2237,11 +2242,11 @@ function draw_signal(data_click,data_hover, data_brush) {
 					.range([0, w]);
     	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
     	
-				var min = 999999;
-				var max = 0;
-				for (var i = data.length - 1; i >= 0; i--) {
+		var min = 999999;
+		var max = 0;
+		for (var i = data.length - 1; i >= 0; i--) {
     	    if(Math.max.apply(Math, data[i]) > max) max = Math.max.apply(Math, data[i])
-						if(Math.min.apply(Math, data[i]) < min) min = Math.min.apply(Math, data[i])
+			if(Math.min.apply(Math, data[i]) < min) min = Math.min.apply(Math, data[i])
     	};
 				
     	var y = d3.scaleLinear().domain([min, max]).range([h, 0]); 
@@ -2524,17 +2529,6 @@ function combine_4_kmers(kmer_list){
 	}
 }
 
-var opts = {
-  lines: 9, // The number of lines to draw
-  length: 9, // The length of each line
-  width: 5, // The line thickness
-  radius: 14, // The radius of the inner circle
-  color: '#EE3124', // #rgb or #rrggbb or array of colors
-  speed: 1.9, // Rounds per second
-  trail: 40, // Afterglow percentage
-  className: 'spinner', // The CSS class to assign to the spinner
-};
-
 // get positions of the t-sne plot before passing it to draw_tsne
 //var target = document.getElementById("tsne");
 var target = d3.select(".tsne").node();
@@ -2542,7 +2536,7 @@ var target = d3.select(".tsne").node();
 
 //var update_tsne = function(data, kmer_list) {
 function update_tsne(data, kmer_list, kmer_size) {
-	
+	console.log(data)
 	var dists = data.map(obj => Object.values(obj));
 	tsne.initDataDist(dists);
 	for(var k = 0; k < 250; k++) {
