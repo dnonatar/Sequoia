@@ -171,13 +171,21 @@ boxplot_dict = dict([('kmer', kmer_list),
 boxplot_df = pd.DataFrame.from_dict(boxplot_dict)
 boxplot_df.to_csv(out_folder+'/boxplot_data.csv', index=False)   ## output directory for boxplot data
 
-######## get the maximum signal length 
+######## Add signal length column and get the maximum signal length for each kmer
 def get_signal_length(row):
     return len(row['values'].split('_'))
 
-max_length_dict = {'max_length':[data_all.apply(get_signal_length, axis =1).max()]}
-d_signal_length = pd.DataFrame(max_length_dict)
-d_signal_length.to_csv(out_folder+'/signal_length_max.csv', index=False)
+data_all[['length']] = data_all.apply(get_signal_length, axis =1).apply(pd.Series)
+
+max_list = []
+kmer_list = []
+for kmer in list(data_all['kmer'].unique()):
+    kmer_list.append(kmer)
+    max_list.append(data_all[data_all['kmer']==kmer]['length'].max())
+    
+max_dict = {'kmer':kmer_list,'length':max_list}
+pd.DataFrame(max_dict).to_csv(out_folder+'/signal_length_max.csv', index=False)
+
 #########
 
 ## creating datasets for drawing raw signals in d3
