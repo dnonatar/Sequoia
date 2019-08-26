@@ -6,172 +6,184 @@
 <script src='//raw.githack.com/karpathy/tsnejs/master/tsne.js'></script>
 <script src="//d3js.org/queue.v1.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-
+<script src="https://unpkg.com/d3-simple-slider"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.js"></script>
 
 <style>
-            /* tell the SVG path to be a thin blue line without any area fill */
-            	body {
-            		font-family: sans-serif;
-            	}
-				path { 
-					stroke-width: 1; 
-					fill: none; 
-				} 
-				.line_hover { 
-					stroke: #ff0000; 
-					stroke-width: 2;
-					opacity : 1;
-				} 
-				.line_click {
-        			stroke: black; 
-					opacity : 0.5;
-				}
-				.line_brush {
-        			stroke: black;
-					opacity : 0.5;
-				}  
-				.axis { 
-					shape-rendering: crispEdges; 
-				} 
-				.x.axis line {
-        			stroke: lightgrey; 
-				} .x.axis 
-				.minor { 
-					stroke-opacity: .5; 
-				} 
-				.x.axis path { 
-					display: black; 
-				} 
-				.x.axis text { 
-					font-size: 14; 
-				} 
-				.y.axis line, .y.axis
-	            path { fill: none; stroke: #000; } .y.axis text { font-size: 14; } .y.axisRight
-	            text { fill: orange; } .y.axisLeft text { fill: steelblue; } 
-				
-				.kmer-filter {
-		            position: absolute;
-		            top: 70px;
-		            left: 20px;
-         		}
-				.button {
-		            position: absolute;
-		            top: 45px;
-		            left: 20px;
-	      		}
+/* tell the SVG path to be a thin blue line without any area fill */
+	body {
+		font-family: sans-serif;
+	}
+	path { 
+		stroke-width: 1; 
+		fill: none; 
+	} 
+	.line_hover { 
+		stroke: #ff0000; 
+		stroke-width: 2;
+		opacity : 1;
+	} 
+	.line_click {
+		stroke: black; 
+		opacity : 0.5;
+	}
+	.line_brush {
+		stroke: black;
+		opacity : 0.5;
+	} 
+	.line_ave {
+		stroke: black;
+		stroke-width: 2;
+		opacity : 1;
+	}   
+	.axis { 
+		shape-rendering: crispEdges; 
+	} 
+	.x.axis line {
+		stroke: lightgrey; 
+	} .x.axis 
+	.minor { 
+		stroke-opacity: .5; 
+	} 
+	.x.axis path { 
+		display: black; 
+	} 
+	.x.axis text { 
+		font-size: 14; 
+	} 
+	.y.axis line, .y.axis
+    path { fill: none; stroke: #000; } .y.axis text { font-size: 14; } .y.axisRight
+    text { fill: orange; } .y.axisLeft text { fill: steelblue; } 
+	
+	.kmer-filter {
+        position: absolute;
+        top: 70px;
+        left: 20px;
+		}
+	.button {
+        position: absolute;
+        top: 45px;
+        left: 20px;
+		}
 
-	      		.plot_type {
-		            position: absolute;
-		            top: 45px;
-		            left: 300px;
-	      		}
+		.plot_type {
+        position: absolute;
+        top: 45px;
+        left: 300px;
+		}
 
-				.choose-folder {
-		            position: absolute;
-		            top: 15px;
-		            left: 20px;
-	     		}
-				
-				.viewport {
-		            position: absolute;
-		            top: 100px;
-		            left: 15px;
-		            overflow: auto;
-		            width: 360px;
-		            height: 400px;
-		            background-color: #e8e8e8;
-		            border: 1px solid #AAAAAA;
-		            border-radius: 4px;
-		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
-        		}
+	.choose-folder {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+		}
+	
+	.viewport {
+        position: absolute;
+        top: 100px;
+        left: 15px;
+        overflow: auto;
+        width: 360px;
+        height: 400px;
+        background-color: #e8e8e8;
+        border: 1px solid #AAAAAA;
+        border-radius: 4px;
+        box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
+	}
 
-				.viewport_selected_text {
-					position: absolute;
-					top: 500px;
-        			left: 15px;
-				}
+	.viewport_selected_text {
+		position: absolute;
+		top: 500px;
+		left: 15px;
+	}
 
-				.viewport_selected {
-		            position: absolute;
-		            top: 540px;
-		            left: 15px;
-		            overflow: auto;
-		            width: 360px;
-		            height: 120px;
-		            background-color: #e8e8e8;
-		            border: 1px solid #AAAAAA;
-		            border-radius: 4px;
-		            box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
-			    }
-				
-				.perplexity_value {
-					position: absolute;
-					top: 400px;
-	            	left: 930px;
-				}
+	.viewport_selected {
+        position: absolute;
+        top: 540px;
+        left: 15px;
+        overflow: auto;
+        width: 360px;
+        height: 120px;
+        background-color: #e8e8e8;
+        border: 1px solid #AAAAAA;
+        border-radius: 4px;
+        box-shadow: inset 1px 1px 6px 2px rgba(0,0,0, .25);
+    }
+	
+	.tsne_parameters {
+		position: absolute;
+		top: 300px;
+    	left: 930px;
+	}
 
-				.zoomin_button {
-					position: absolute;
-					top: 450px;
-	            	left: 930px;
-				}
+	.redraw_tsne_button {
+		position: absolute;
+		top: 450px;
+    	left: 930px;
+	}
 
-				.zoomout_button {
-					position: absolute;
-					top: 450px;
-	            	left: 1000px;
-				}
+	.zoomin_button {
+		position: absolute;
+		top: 500px;
+    	left: 930px;
+	}
 
-				.normalize_checkbox {
-					position: absolute;
-					top: 500px;
-	            	left: 930px;
-				}
+	.zoomout_button {
+		position: absolute;
+		top: 500px;
+    	left: 1000px;
+	}
 
-				.export_button {
-					position: absolute;
-					top: 550px;
-	            	left: 930px;
-				}
+	.normalize_checkbox {
+		position: absolute;
+		top: 550px;
+    	left: 930px;
+	}
 
-				.reset_button {
-					position: absolute;
-					top: 600px;
-		        	left: 930px;
-				}
+	.average_checkbox {
+		position: absolute;
+		top: 590px;
+    	left: 930px;
+	}
 
-				.tsne {
-		            position: absolute;
-		            top: 270px;
-		            left: 400px;
-		            
-		        }
-				.raw_signal {
-		            position: absolute;
-		            top: 10px;
-		            left: 400px;
-		            width: 350px;
-		            height: 200px;
-		        }
-				div.tooltip {	
-    				position: absolute;			
-    				text-align: center;			
-    				width: 100px;					
-    				height: 48px;					
-    				padding: 2px;				
-    				font: 12px sans-serif;		
-    				background: lightsteelblue;	
-    				border: 0px;		
-   				 	border-radius: 8px;			
-    				pointer-events: none;			
-				}
-				.brushed {
-		            opacity: 1.0;
-		        }
-		        .non_brushed {
-		            opacity: 0.7;
-		        }
-				
+	.export_button {
+		position: absolute;
+		top: 630px;
+    	left: 930px;
+	}
+
+	.tsne {
+        position: absolute;
+        top: 270px;
+        left: 400px;
+        
+    }
+	.raw_signal {
+        position: absolute;
+        top: 10px;
+        left: 400px;
+        width: 350px;
+        height: 200px;
+    }
+	div.tooltip {	
+		position: absolute;			
+		text-align: center;			
+		width: 100px;					
+		height: 48px;					
+		padding: 2px;				
+		font: 12px sans-serif;		
+		background: lightsteelblue;	
+		border: 0px;		
+		 	border-radius: 8px;			
+		pointer-events: none;			
+	}
+	.brushed {
+        opacity: 1.0;
+    }
+    .non_brushed {
+        opacity: 0.7;
+    }
+	
 					
 </style>
 </head>
@@ -215,10 +227,13 @@
 <div class = "tsne"></div>
 <div class = "raw_signal"></div>
 
-<div class="perplexity_value">
-    <div class="col-sm-2"><p id="value-simple"></p></div>
-    <div class="col-sm"><div id="slider-simple"></div></div>
- </div>
+<div class="tsne_parameters"> 
+	<div id="slider-parameters"></div>
+</div>
+
+<div class = "redraw_tsne_button">
+	<button onclick = "redraw_tsne()"> Redraw t-SNE </button>
+</div>
 
 <div class = "zoomin_button">
 	<button onclick = "zoom_in()"> Zoom in </button>
@@ -232,13 +247,13 @@
 	<button onclick="download_csv()">Download CSV</button> (export selected points)
 </div>
 
-<!--<div class = "reset_button">
-	<button onclick="reset()"> Reset </button> 
-</div>-->
-
 <div class = "normalize_checkbox">
 	<input type="checkbox" id="normalize_checkbox"> Normalization Mode (click before brush)
-<div>
+</div>
+
+<div class = "average_checkbox">
+	<input type="checkbox" id="average_checkbox"> Average Mode (click before brush)
+</div>
 
 <script type="text/javascript">
 var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]
@@ -982,6 +997,7 @@ var y0_tsne;
 var brush;
 // function for drawing t-sne
 function draw_tsne(position, kmer_list, kmer_size) {
+	
 	var width = 500;
 	var height = 400;
 	//var padding = 65;
@@ -1218,6 +1234,11 @@ function isBrushed(brush_coords, cx, cy) {
       return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
 }
 
+// function to sum all arrays in 'data'
+function sum_columns(data) {
+	return _.map(_.unzip(data), _.sum);
+}
+
 // add new signals to data array and then pass it to draw_signal 
 var data_click = []
 var data_hover = []
@@ -1225,12 +1246,12 @@ var data_row = []
 var data_brush = []
 var data_export_click = []
 var data_export_brush = []
-
 var data_brush_byKmer 
 var data_brush_kmer1 = []
 var data_brush_kmer2 = []
 var data_brush_kmer3 = []
 var data_brush_kmer4 = []
+var data_ave = []
 
 function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	data_brush_kmer1.length = 0
@@ -1260,11 +1281,17 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 					data_brush.push(d[row]['values'].split("_").map(Number))
 					data_export_brush.push(d[row])
 				}
+
+
 				draw_signal(data_click, data_hover, data_brush)
 
 				data_brush_byKmer = {}
 				data_brush_byKmer[kmer_list[0]] = data_brush
-				
+
+				data_ave1 = sum_columns(data_brush).map(function(x) {return x/data_brush.length})
+
+				data_ave = [data_ave1]
+			
 			}
 
 		})(row_list, filename1, currentBrushEvent);
@@ -1300,6 +1327,12 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer = {}
 			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
+
+			
+			data_ave1 = sum_columns(data_brush_kmer1).map(function(x) {return x/data_brush_kmer1.length})
+			data_ave2 = sum_columns(data_brush_kmer2).map(function(x) {return x/data_brush_kmer2.length})
+
+			data_ave = [data_ave1, data_ave2]
 
 			draw_signal(data_click, data_hover, data_brush)
 
@@ -1341,6 +1374,12 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
+
+			data_ave1 = sum_columns(data_brush_kmer1).map(function(x) {return x/data_brush_kmer1.length})
+			data_ave2 = sum_columns(data_brush_kmer2).map(function(x) {return x/data_brush_kmer2.length})
+			data_ave3 = sum_columns(data_brush_kmer3).map(function(x) {return x/data_brush_kmer3.length})
+
+			data_ave = [data_ave1, data_ave2, data_ave3]
 
 			draw_signal(data_click, data_hover, data_brush)
 		}
@@ -1388,6 +1427,12 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
 			data_brush_byKmer[kmer_list[3]] = data_brush_kmer4
 			
+			data_ave1 = sum_columns(data_brush_kmer1).map(function(x) {return x/data_brush_kmer1.length})
+			data_ave2 = sum_columns(data_brush_kmer2).map(function(x) {return x/data_brush_kmer2.length})
+			data_ave3 = sum_columns(data_brush_kmer3).map(function(x) {return x/data_brush_kmer3.length})
+			data_ave4 = sum_columns(data_brush_kmer4).map(function(x) {return x/data_brush_kmer4.length})
+
+			data_ave = [data_ave1, data_ave2, data_ave3, data_ave4]
 			draw_signal(data_click, data_hover, data_brush)
 		}
 	}
@@ -1893,6 +1938,7 @@ function draw_boxplot(passed_data) {
 }
 
 function loading_gif(){
+	console.log('gif loading')
 	d3.select("#tsne")
 		.append("svg:image")
 		    .attr('x', 220)
@@ -2215,8 +2261,17 @@ var array_export
 // draw raw signals based on the data passed from add_signal
 function draw_signal(data_click,data_hover, data_brush) {
 	d3.csv(folder+'/signal_length_max.csv', function(data) {
-		max_signal_length = data[0]['max_length']
-			
+		
+		// for making the length of raw signal plot flexible
+		max_list = []
+		for (i=0; i<data.length; i++) {
+			if(kmer_list.includes(Object.values(data[i])[0])){
+				max_list.push(Object.values(data[i])[1])
+			}
+		}	
+		max_signal_length = Math.max(...max_list)
+		
+
 		 // preparing for download_csv() by converting an array of objects(data_export) to an array of arrays(array_export)
 		 data_export = data_export_click.concat(data_export_brush)
 		 array_export = data_export.map(function(obj) {
@@ -2225,7 +2280,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 			});
 		});
 
-		var data = data_hover.concat(data_click).concat(data_brush)
+		var data = data_hover.concat(data_click).concat(data_brush).concat(data_ave)
 		
 		var m = [20, 40, 20, 90]; // margins
     	var w = 800 - m[1] - m[3]; // width
@@ -2341,24 +2396,46 @@ function draw_signal(data_click,data_hover, data_brush) {
 	    					.attr('vector-effect', 'non-scaling-stroke')	
 				
 		// signal plots for the brushed points
-		graph.selectAll(".line")
-			.data(data_brush)
-			.enter().append("svg:path")
-						.attr("d", line)
-						.attr("class", "line_brush")
-						.attr('transform', function(d) {
-	    						if (d3.select("#normalize_checkbox").property("checked")) {
-	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
-	    						}
-	    						else {
-	    							return null;
-	    						}
-	    					})
-	    					.attr('vector-effect', 'non-scaling-stroke')
-	    					.attr("id", function(d,i){return "line_brush_"+d; })  
-						.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
-						.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
+		if(d3.select("#average_checkbox").property("checked")) {
+			console.log(data_ave)
+			graph.selectAll(".line")
+				.data(data_ave)
+				.enter().append("svg:path")
+							.attr("d", line)
+							.attr("class", "line_ave")
+							.attr('transform', function(d) {
+		    						if (d3.select("#normalize_checkbox").property("checked")) {
+		    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    						}
+		    						else {
+		    							return null;
+		    						}
+		    					})
+		    					.attr('vector-effect', 'non-scaling-stroke')
+		    					.attr("id", function(d,i){return "line_ave_"+d; })  
+							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
+							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
+		} else {
+			console.log(data_brush)
+			graph.selectAll(".line")
+				.data(data_brush)
+				.enter().append("svg:path")
+							.attr("d", line)
+							.attr("class", "line_brush")
+							.attr('transform', function(d) {
+		    						if (d3.select("#normalize_checkbox").property("checked")) {
+		    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    						}
+		    						else {
+		    							return null;
+		    						}
+		    					})
+		    					.attr('vector-effect', 'non-scaling-stroke')
+		    					.attr("id", function(d,i){return "line_brush_"+d; })  
+							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
+							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 
+		}
 		putNodeOnTop(d3.selectAll(".line_hover").nodes());
 	})
 }
@@ -2533,10 +2610,11 @@ function combine_4_kmers(kmer_list){
 //var target = document.getElementById("tsne");
 var target = d3.select(".tsne").node();
 
-
-//var update_tsne = function(data, kmer_list) {
+var kmer_size;
+var tsne_data;
 function update_tsne(data, kmer_list, kmer_size) {
-	console.log(data)
+	tsne_data = data
+	kmer_size = kmer_size
 	var dists = data.map(obj => Object.values(obj));
 	tsne.initDataDist(dists);
 	for(var k = 0; k < 250; k++) {
@@ -2548,6 +2626,68 @@ function update_tsne(data, kmer_list, kmer_size) {
 	draw_tsne(Y, kmer_list, kmer_size)
 	
 }
+
+
+// interface for tsne parameters 
+
+var sliderPerplexity = d3
+    .sliderBottom()
+    .min(5)
+    .max(50)
+    .width(180)
+    .tickFormat(d3.format('d'))
+    .ticks(1)
+    .default(opt.perplexity)
+    .on('onchange', val => {
+     	opt.perplexity = Math.round(val);
+     	
+    });
+
+var sliderLearnRate = d3
+    .sliderBottom()
+    .min(10)
+    .max(1000)
+    .width(180)
+    .tickFormat(d3.format('d'))
+    .ticks(1)
+    .default(opt.epsilon)
+    .on('onchange', val => {
+     	opt.epsilon = Math.round(val);
+		
+    });    
+
+var svgParameters = d3
+    .select('#slider-parameters')
+    .append('svg')
+    .attr('width', 350)
+    .attr('height', 200)
+
+// Perplexity
+svgParameters.append('text')
+    .text('perplexity')
+    .attr('y', 35)    
+
+svgParameters.append('g')
+	.attr('transform', 'translate(130,30)')
+	.call(sliderPerplexity);
+
+// Learning Rate
+svgParameters.append('text')
+    .text('Learning Rate')
+    .attr('y', 85)    
+
+svgParameters.append('g')
+	.attr('transform', 'translate(130,80)')
+	.call(sliderLearnRate);
+
+function redraw_tsne(){
+	console.log(opt)
+	d3.select('#tsne').selectAll('circle').remove()	
+	loading_gif()
+	tsne = new tsnejs.tSNE(opt)
+	update_tsne(tsne_data, kmer_list, kmer_size)
+}
+
 </script>
 </body>
 
