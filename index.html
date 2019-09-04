@@ -116,6 +116,12 @@
     	left: 930px;
 	}
 
+	.tsne_radius {
+		position: absolute;
+		top: 410px;
+    	left: 930px;
+	}
+
 	.redraw_tsne_button {
 		position: absolute;
 		top: 450px;
@@ -231,6 +237,14 @@
 	<div id="slider-parameters"></div>
 </div>
 
+<div class = "tsne_radius">
+	<select id="tsne_radius">
+		<option value=3>3</option>
+		<option value=4 selected="selected">4</option>
+		<option value=5>5</option>
+	</select>
+</div>
+
 <div class = "redraw_tsne_button">
 	<button onclick = "redraw_tsne()"> Redraw t-SNE </button>
 </div>
@@ -248,7 +262,7 @@
 </div>
 
 <div class = "normalize_checkbox">
-	<input type="checkbox" id="normalize_checkbox"> Normalization Mode (click before brush)
+	<button onclick="normalize_signals()"> Normalize </button> 
 </div>
 
 <div class = "average_checkbox">
@@ -270,7 +284,7 @@ d3.csv('data'+'/boxplot_data.csv', function(data) {
 })
 
 // When changing plot type
-d3.select(".plot_type").on("change",function(){
+d3.select(".plot_type").on("change", function(){
 	
 	var sect = document.getElementById("plot_type");
 	var section = sect.options[sect.selectedIndex].value;
@@ -282,6 +296,15 @@ d3.select(".plot_type").on("change",function(){
 		draw_boxplot(data=[]);
 		draw_clicked_boxplot(kmer_list, tsne_colors)			
 	}
+})
+
+var tsne_radius = 4 
+// when changing the radius of tsne plot
+d3.select(".tsne_radius").on("change", function(){
+	 var sect = document.getElementById("tsne_radius");
+	 tsne_radius = sect.options[sect.selectedIndex].value;
+	 console.log(tsne_radius)
+
 })
 
 //when changing sorting option
@@ -496,15 +519,7 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 					// remove selected boxplot from the current viewport
 					index = kmerValues.indexOf(d.kmer)
 					kmerValues.splice(index, 1)
-					/*
-					filtered_data = []
-					for (i=0;i<data.length;i++) {
-						if(kmerValues.includes(data[i]['kmer']) ){
-							filtered_data.push(data[i])
-						}
-					}
-					*/
-
+					
 					kmer_list.push(d.key)
 					draw_clicked_violin(kmer_list, tsne_colors)
 					
@@ -1064,7 +1079,7 @@ function draw_tsne(position, kmer_list, kmer_size) {
 		  .data(position)
 		  .enter()
 		  .append('circle')
-		  	.attr('r', 6)
+		  	.attr('r', tsne_radius)
 			.attr('cx', function(d) {
 					return xScale_tsne(d[0]);
 			})
@@ -1123,7 +1138,7 @@ function draw_tsne(position, kmer_list, kmer_size) {
 				add_signal_hover(i, kmer_list);
 			})
 			.on('mouseout', function(d,i){
-				d3.select(this).attr("r", "6");
+				d3.select(this).attr("r", tsne_radius);
 				d3.select(this).style("fill", old_color)
 				remove_signal_hover();
 			})
@@ -1587,6 +1602,7 @@ function add_signal_hover(row, kmer_list){
 				data_hover.push(d[row]['values'].split("_").map(Number))
 				draw_signal(data_click, data_hover, data_brush)
 			}
+
 		}
 	} else if (kmer_list.length == 3) {
 		kmer1 = kmer_list[0]
@@ -1948,7 +1964,7 @@ function loading_gif(){
 		    .attr("xlink:href", "./images/ajax-loader.gif")
 }
 
-
+var hovered_kmer_color;
 // for selected kmers
 function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 	d3.select('.viewport_selected').selectAll('*').remove()
@@ -1988,33 +2004,14 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 		var xScale = d3.scaleLinear()
 				.domain([0,8000])
 				.range([margin.left, w- margin.right-50])
-		/*var yScale = d3.scaleLinear()
-				.domain([
-					Number(d3.max(data, d => d[catVariable])) + 1,
-					Number(d3.min(data, d => d[catVariable])) - 1
-				])
-				.range([h - margin.bottom, margin.top])	
-	  */
-	
+			
 		var yScale = d3.scalePoint()
 				.domain(kmerValues)
 				.range([margin.top,h - margin.bottom])
-		/*var xAxis = d3.axisBottom()
-									.scale(xScale)
-									.ticks(10)
-									.tickSize(-470) 
-					
-		d3.select('svg')
-			.append('g')
-			.attr('transform', 'translate(0,480)')
-			.attr('id', 'xAxisG')
-			.call(xAxis) */
+		
 		var yAxis = d3.axisRight()
 						.scale(yScale)
-						.tickSize(0)
-					//.tickValues(catValues)
-						//.tickValues(kmerValues)
-								
+						.tickSize(0)								
 	
 	d3.select('.viewport_selected').select('svg')
 		.append('g')
@@ -2037,7 +2034,6 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 		.each(function(d, i) {
 			d3.select(this)
 		        .append('rect')
-		        //.attr('class', 'cover')
 		        .attr('x', -150)
 		        .attr('y', -10)
 		        .attr('height', 20)
@@ -2100,8 +2096,9 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 
 					// Execute only if there is an element in brush (to avoid throwing error)   
 					if (!jQuery.isEmptyObject(data_brush_byKmer)) {
-						data_hover = data_brush_byKmer[d.kmer] 	
-						draw_signal(data_click,data_hover, data_brush)
+						hovered_kmer_color = clicked_colors[i]
+						data_hover_kmer = data_brush_byKmer[d.kmer] 	
+						draw_signal(data_click,data_hover, data_brush, data_hover_kmer)
 					}
 				})
 
@@ -2256,10 +2253,18 @@ d3.csv(folder+'/signal_length_max.csv', function(data) {
 				.text("current (mA)")
 
 })
+
 var array_export 
 
+// normalize only if normalize_state = 1
+var normalize_state = 0
+function normalize_signals(){
+	draw_signal(data_click,data_hover, data_brush)
+	normalize_state = (normalize_state==0) ? 1 : 0;
+}
+
 // draw raw signals based on the data passed from add_signal
-function draw_signal(data_click,data_hover, data_brush) {
+function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 	d3.csv(folder+'/signal_length_max.csv', function(data) {
 		
 		// for making the length of raw signal plot flexible
@@ -2280,7 +2285,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 			});
 		});
 
-		var data = data_hover.concat(data_click).concat(data_brush).concat(data_ave)
+		var data = data_hover.concat(data_click).concat(data_brush)
 		
 		var m = [20, 40, 20, 90]; // margins
     	var w = 800 - m[1] - m[3]; // width
@@ -2370,7 +2375,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 						.attr("d", line)
 						.attr("class","line_click")
 						.attr('transform', function(d) {
-	    						if (d3.select("#normalize_checkbox").property("checked")) {
+	    						if (normalize_state!=0) {
 	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
 	    						}
 	    						else {
@@ -2386,7 +2391,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 						.attr("d", line)
 						.attr("class","line_hover")
 						.attr('transform', function(d) {
-	    						if (d3.select("#normalize_checkbox").property("checked")) {
+	    						if (normalize_state!=0) {
 	    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
 	    						}
 	    						else {
@@ -2394,7 +2399,28 @@ function draw_signal(data_click,data_hover, data_brush) {
 	    						}
 	    					})
 	    					.attr('vector-effect', 'non-scaling-stroke')	
-				
+
+		// signal plot for the hovered kmer
+		if (data_hover_kmer != null) {
+		
+			graph.selectAll(".line")
+				.data(data_hover_kmer)
+				.enter().append("svg:path")
+							.attr("d", line)
+							.attr("class","line_hover_kmer")
+							.attr('transform', function(d) {
+		    						if (normalize_state!=0) {
+		    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    						}
+		    						else {
+		    							return null;
+		    						}
+		    					})
+		    					.attr('vector-effect', 'non-scaling-stroke')	
+		    				.attr("stroke", hovered_kmer_color)
+		    				.style("stroke-width", "2")
+		    				.style("opacity", "0.5")
+	    }
 		// signal plots for the brushed points
 		if(d3.select("#average_checkbox").property("checked")) {
 			console.log(data_ave)
@@ -2416,14 +2442,13 @@ function draw_signal(data_click,data_hover, data_brush) {
 							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
 							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 		} else {
-			console.log(data_brush)
 			graph.selectAll(".line")
 				.data(data_brush)
 				.enter().append("svg:path")
 							.attr("d", line)
 							.attr("class", "line_brush")
 							.attr('transform', function(d) {
-		    						if (d3.select("#normalize_checkbox").property("checked")) {
+		    						if (normalize_state!=0) {
 		    							return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
 		    						}
 		    						else {
@@ -2437,6 +2462,7 @@ function draw_signal(data_click,data_hover, data_brush) {
 
 		}
 		putNodeOnTop(d3.selectAll(".line_hover").nodes());
+		putNodeOnTop(d3.selectAll(".line_hover_kmer").nodes());
 	})
 }
 
