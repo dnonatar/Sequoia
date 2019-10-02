@@ -32,13 +32,7 @@
 		stroke: black;
 		stroke-width: 1;
 		opacity : 0.5;
-	}
-	 
-	.line_avee {
-		stroke: black;
-		stroke-width: 2;
-		opacity : 1;
-	}   
+	}  
 	.axis { 
 		shape-rendering: crispEdges; 
 	} 
@@ -62,24 +56,24 @@
         position: absolute;
         top: 70px;
         left: 20px;
-		}
+	}
 	.button {
         position: absolute;
         top: 45px;
         left: 20px;
-		}
+	}
 
-		.plot_type {
+	.plot_type {
         position: absolute;
         top: 45px;
         left: 300px;
-		}
+	}
 
 	.choose-folder {
         position: absolute;
         top: 15px;
         left: 20px;
-		}
+	}
 	
 	.viewport {
         position: absolute;
@@ -119,40 +113,34 @@
     	left: 930px;
 	}
 
-	.tsne_radius {
-		position: absolute;
-		top: 410px;
-    	left: 930px;
-	}
-
 	.redraw_tsne_button {
 		position: absolute;
-		top: 450px;
+		top: 470px;
     	left: 930px;
 	}
 
 	.zoomin_button {
 		position: absolute;
-		top: 500px;
+		top: 550px;
     	left: 930px;
 	}
 
 	.zoomout_button {
 		position: absolute;
-		top: 500px;
+		top: 550px;
     	left: 1000px;
 	}
 
-	.normalize_checkbox {
+	.normalize_button {
 		position: absolute;
-		top: 550px;
-    	left: 930px;
+		top: 50px;
+    	left: 1130px;
 	}
 
 	.average_button {
 		position: absolute;
-		top: 550px;
-    	left: 1020px;
+		top: 80px;
+    	left: 1130px;
 	}
 
 	.export_button {
@@ -240,14 +228,6 @@
 	<div id="slider-parameters"></div>
 </div>
 
-<div class = "tsne_radius">
-	<select id="tsne_radius">
-		<option value=3>3</option>
-		<option value=4 selected="selected">4</option>
-		<option value=5>5</option>
-	</select>
-</div>
-
 <div class = "redraw_tsne_button">
 	<button onclick = "redraw_tsne()"> Redraw t-SNE </button>
 </div>
@@ -264,7 +244,7 @@
 	<button onclick="download_csv()">Download CSV</button> (export selected points)
 </div>
 
-<div class = "normalize_checkbox">
+<div class = "normalize_button">
 	<button onclick="normalize_signals()"> Normalize </button> 
 </div>
 
@@ -771,9 +751,7 @@ function draw_clicked_violin(clicked_kmers, colors) {
 			
 				})
 				.on('mouseover', function(d,i){
-					
-					draw_signal(data_click,data_hover = data_brush_byKmer[d.key] , data_brush)
-					
+										
 					d3.select(this)
 						.style('stroke', 'black')
 					    .style('stroke-width', 3)
@@ -2417,8 +2395,8 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    				})
 		    				.attr('vector-effect', 'non-scaling-stroke')	
 		    				.attr("stroke", hovered_kmer_color)
-		    				.style("stroke-width", "2")
-		    				.style("opacity", "0.5")
+		    				.style("stroke-width", "3")
+		    				.style("opacity", "0.4")
 	    }
 
 		// signal plots for the brushed points
@@ -2457,8 +2435,8 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    					}
 		    				})
 		    				.attr('vector-effect', 'non-scaling-stroke')
-		    				.attr("id", function(d,i){return "line_brush_"+d; })  
-							.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
+		    				.attr("id", function(d,i){return "line_brush_"+d; })
+		    				.on("mouseover",function(d){d3.select(this).style("stroke-width",3)})
 							.on("mouseout",function(d){d3.select(this).style("stroke-width",1)})
 
 		}
@@ -2667,7 +2645,6 @@ var sliderPerplexity = d3
     .default(opt.perplexity)
     .on('onchange', val => {
      	opt.perplexity = Math.round(val);
-     	
     });
 
 var sliderLearnRate = d3
@@ -2680,8 +2657,20 @@ var sliderLearnRate = d3
     .default(opt.epsilon)
     .on('onchange', val => {
      	opt.epsilon = Math.round(val);
-		
-    });    
+	});    
+
+var sliderRadius = d3
+    .sliderBottom()
+    .min(2)
+    .max(5)
+    .width(180)
+    .tickFormat(d3.format('d'))
+    .ticks(1)
+    .default(tsne_radius)
+    .step(1)
+    .on('onchange', val => {
+     	tsne_radius = Math.round(val);
+	});    
 
 var svgParameters = d3
     .select('#slider-parameters')
@@ -2691,7 +2680,7 @@ var svgParameters = d3
 
 // Perplexity
 svgParameters.append('text')
-    .text('perplexity')
+    .text('Perplexity')
     .attr('y', 35)    
 
 svgParameters.append('g')
@@ -2706,6 +2695,15 @@ svgParameters.append('text')
 svgParameters.append('g')
 	.attr('transform', 'translate(130,80)')
 	.call(sliderLearnRate);
+
+// t-SNE radius
+svgParameters.append('text')
+    .text('Radius')
+    .attr('y', 135)    
+
+svgParameters.append('g')
+	.attr('transform', 'translate(130,130)')
+	.call(sliderRadius);	
 
 function redraw_tsne(){
 	console.log(opt)
