@@ -9,6 +9,7 @@
 <script src="https://unpkg.com/d3-simple-slider"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore.js"></script>
+<script src="https://unpkg.com/mathjs@6.2.3/dist/math.min.js"></script>
 
 <style>
 /* tell the SVG path to be a thin blue line without any area fill */
@@ -23,15 +24,21 @@
 		stroke: #ff0000; 
 		stroke-width: 2;
 		opacity : 1;
+	}
+
+	.line_hover_kmer { 
+		stroke-width: 2;
+		opacity : 0.4;
 	} 
+
 	.line_click {
 		stroke: black; 
 		opacity : 0.5;
 	}
 	.line_brush {
 		stroke: black;
-		stroke-width: 1;
-		opacity : 0.5;
+		stroke-width: 2;
+		opacity : 0.4;
 	}  
 	.axis { 
 		shape-rendering: crispEdges; 
@@ -60,13 +67,13 @@
 	.button {
         position: absolute;
         top: 45px;
-        left: 20px;
+        left: 120px;
 	}
 
 	.plot_type {
         position: absolute;
         top: 45px;
-        left: 300px;
+        left: 20px;
 	}
 
 	.choose-folder {
@@ -180,6 +187,8 @@
     .non_brushed {
         opacity: 0.7;
     }
+
+    
 	
 					
 </style>
@@ -1278,7 +1287,13 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 				data_brush_byKmer = {}
 				data_brush_byKmer[kmer_list[0]] = data_brush
 
-				data_ave1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_ave(x))
+				data_ave1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_median(x))
+				array_q1_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_q1(x))
+				array_q3_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_q3(x))
+				data_q_1 = combine_Q(array_q1_1,array_q3_1)
+				
+				// data to be used in the draw_signal function
+				data_quantiles = [data_q_1]
 				data_ave = [data_ave1]
 			
 			}
@@ -1317,8 +1332,19 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_ave(x))
+			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			
+			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_1 = combine_Q(array_q1_1,array_q3_1)
+
+			array_q1_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_2 = combine_Q(array_q1_2,array_q3_2)
+				
+			// data to be used in the draw_signal function
+			data_quantiles = [data_q_1, data_q_2]
 			data_ave = [data_ave1, data_ave2]
 
 			draw_signal(data_click, data_hover, data_brush)
@@ -1362,10 +1388,24 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_ave(x))
+			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
 
+			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_1 = combine_Q(array_q1_1,array_q3_1)
+
+			array_q1_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_2 = combine_Q(array_q1_2,array_q3_2)
+
+			array_q1_3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_3 = combine_Q(array_q1_3,array_q3_3)
+				
+			// data to be used in the draw_signal function
+			data_quantiles = [data_q_1, data_q_2, data_q_3]
 			data_ave = [data_ave1, data_ave2, data_ave3]
 
 			draw_signal(data_click, data_hover, data_brush)
@@ -1414,11 +1454,29 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
 			data_brush_byKmer[kmer_list[3]] = data_brush_kmer4
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_ave(x))
-			data_ave4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_ave(x))
+			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
+			data_ave4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_median(x))
 
+			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_1 = combine_Q(array_q1_1,array_q3_1)
+
+			array_q1_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_2 = combine_Q(array_q1_2,array_q3_2)
+
+			array_q1_3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_3 = combine_Q(array_q1_3,array_q3_3)
+
+			array_q1_4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_q1(x))
+			array_q3_4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_q3(x))
+			data_q_4 = combine_Q(array_q1_4,array_q3_4)
+				
+			// data to be used in the draw_signal function
+			data_quantiles = [data_q_1, data_q_2, data_q_3, data_q_4]
 			data_ave = [data_ave1, data_ave2, data_ave3, data_ave4]
 			draw_signal(data_click, data_hover, data_brush)
 		}
@@ -2293,18 +2351,19 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 				
     	// automatically determining max range can work something like this
     	//var y = d3.scaleLinear().domain([0, d3.max(data_hover[0])]).range([h, 0]);
+
     	// create a line function that can convert data[] into x and y points
-    	var line = d3.line()
-    	// assign the X function to plot our line as we wish
-    	.x(function(d, i) {
-    	    
-    	    // return the X coordinate where we want to plot this datapoint
-    	    return x(i);
-    	}).y(function(d) {
-    	    
-    	    // return the Y coordinate where we want to plot this datapoint
-    	    return y(d);
-    	})
+    	var line = d3.line()   	
+    		.x(function(d, i) { return x(i); }) 
+    		.y(function(d) { return y(d); })
+
+    	// define the area for average plot
+    	var area = d3.area()
+    		.curve(d3.curveMonotoneX)
+    		.x(function(d,i) {return x(i); })
+    		.y0(function(d) {return y(d.q1); })
+    		.y1(function(d) {return y(d.q3); })
+
     	// Add an SVG element with the desired dimensions and margin.
 		d3.select(".raw_signal").selectAll('*').remove()
     	var graph = d3.select(".raw_signal")
@@ -2395,13 +2454,25 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    				})
 		    				.attr('vector-effect', 'non-scaling-stroke')	
 		    				.attr("stroke", hovered_kmer_color)
-		    				.style("stroke-width", "3")
-		    				.style("opacity", "0.4")
 	    }
 
 		// signal plots for the brushed points
-		
 		if (average_state!=0) {
+			graph.selectAll(".area")
+				 .data(data_quantiles)
+				 .enter().append("path")
+				 			.attr("class","quantiles_area")
+				 			.attr('transform', function(d) {
+		    					if (normalize_state!=0) {
+		    						return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    					} else {
+		    						return null;
+		    					}
+		    				})
+				 			.attr("d",area)
+				 			.style("fill", function(d,i){ return tsne_colors[i] })
+				 			.style("opacity", "0.3")
+
 			graph.selectAll(".line")
 				.data(data_ave)
 				.enter().append("svg:path")
@@ -2417,10 +2488,11 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    				.attr('vector-effect', 'non-scaling-stroke')
 		    				.attr("id", function(d,i){return "line_ave_"+i; })
 		    				.attr("stroke", function(d,i){ return tsne_colors[i] })
-		    				//.attr("stroke", "Yellow")  
 		    				.style("stroke-width", "2")
 		    				.style("opacity", "1")
-							
+			
+
+
 		} else {
 			graph.selectAll(".line")
 				.data(data_brush)
@@ -2721,14 +2793,31 @@ function filter_null(array) {
 	return filtered
 }
 
-//get an average of an array "arr"
-function get_ave(arr) {
-	arrSum = function(arr){
-		return arr.reduce(function(a,b){
-			return a + b
-		}, 0)
+// get a median of an array "arr"
+function get_median(arr) {
+	return math.median(arr)	
+}
+
+//get a first quatile of an array "arr" (use method 2 from quartile's wikipedia page)
+function get_q1(arr) {
+	return math.quantileSeq(arr, 0.25)
+}
+
+//get a third quatile of an array "arr" (use method 2 from quartile's wikipedia page)
+function get_q3(arr) {
+	return math.quantileSeq(arr, 0.75)
+}
+
+// combine q1 and q3 arrays into an array of dicts (each dict contains q1 and q3 key-val pairs)
+function combine_Q(array_Q1, array_Q3) {
+	var data_q = []
+	for (i = 0; i < array_Q1.length; i++ ) {
+		data_q.push({
+			q1:array_Q1[i],
+			q3:array_Q3[i]
+		})
 	}
-	return arrSum(arr)/arr.length
+	return data_q
 }
 
 </script>
