@@ -43,11 +43,9 @@
 	.axis { 
 		shape-rendering: crispEdges; 
 	} 
-	.x.axis line {
+	
+	#x_axis_signal line {
 		stroke: lightgrey; 
-	} .x.axis 
-	.minor { 
-		stroke-opacity: .5; 
 	} 
 	.x.axis path { 
 		display: black; 
@@ -282,7 +280,7 @@ d3.select(".plot_type").on("change", function(){
 	var section = sect.options[sect.selectedIndex].value;
 	
 	if (section == 'violin') {
-		draw_violin(filtered_data_violin=[],filtered_data_box=[]);
+		draw_violin(filtered_data_violin='all',filtered_data_box='all');
 		draw_clicked_violin(kmer_list, tsne_colors);
 	} else {
 		draw_boxplot(data=[]);
@@ -295,8 +293,6 @@ var tsne_radius = 4
 d3.select(".tsne_radius").on("change", function(){
 	 var sect = document.getElementById("tsne_radius");
 	 tsne_radius = sect.options[sect.selectedIndex].value;
-	 console.log(tsne_radius)
-
 })
 
 //when changing sorting option
@@ -306,7 +302,7 @@ dataSort.on("change", function(){
 	var section = sect.options[sect.selectedIndex].value;
 
 	if (section == 'violin') {
-		draw_violin(filtered_data_violin=[],filtered_data_box=[]);
+		draw_violin(filtered_data_violin='all',filtered_data_box='all');
 	} else {
 		draw_boxplot(data=[]);			
 	}
@@ -315,11 +311,6 @@ dataSort.on("change", function(){
 
 function draw_violin(filtered_data_violin, filtered_data_box) {
 
-	var mySelection = d3.select(".viewport").selectAll("*");
-	console.log("selection size: " + mySelection.size());
-	mySelection.remove();
-
-	//d3.select(".viewport").selectAll("*").remove()   // not gonna work if placed here. why?
 	file1 = './'+folder+'/boxplot_data.csv'
 	file2 = './'+folder+'/violin_data.csv'
 	queue()
@@ -331,18 +322,22 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		d3.select(".viewport").selectAll("*").remove()
 		box_data = file1
 		violin_data = file2
-		if (filtered_data_violin.length != 0){ 
+
+		// 'all' indicates that no data are filtered out (i.e. use all data).
+		if (filtered_data_violin != 'all' && filtered_data_box != 'all') {
 			violin_data = filtered_data_violin
 			box_data = filtered_data_box
 		}
-		
+
 		//get sorting option
 		var form = document.getElementById("sort")
 		var form_val;
 
 		for(var i=0; i<form.length; i++){
-		  if(form[i].checked){
-		    form_val = form[i].id;}} 
+			if(form[i].checked){
+				form_val = form[i].id;
+			}
+		} 
 
 		if (form_val == 'sort_median') {
 			violin_data.sort(function(a,b) {
@@ -489,13 +484,12 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 			.style('opacity', 0)
 			.on("click", function(d) {
 				// remove signal plots
-					d3.selectAll('.line_click').remove()
-					d3.selectAll('.line_hover').remove()
-					d3.selectAll('.line_brush').remove()
-					data_click = []
-					data_hover = []
-					data_brush = []
-					data_brush_byKmer = {}
+				d3.select(".signal_lines").remove()
+
+				data_click = []
+				data_hover = []
+				data_brush = []
+				data_brush_byKmer = {}
 
 				if(kmer_list.length < 4 && kmer_list.includes(d.key)==false) {				
 				
@@ -724,9 +718,8 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				
         		.on("click", function(d) {
         			// remove signal plots
-					d3.selectAll('.line_click').remove()
-					d3.selectAll('.line_hover').remove()
-					d3.selectAll('.line_brush').remove()
+					d3.select(".signal_lines").remove()
+					
 					data_click = []
 					data_hover = []
 					data_brush = []
@@ -774,30 +767,13 @@ function draw_clicked_violin(clicked_kmers, colors) {
 
 				})
 
-				
 				.on('mouseout', function(){
 					d3.select(this)					
 						.style('stroke', 'none')
-					
+
 					draw_signal(data_click,data_hover = [] , data_brush)
 				})
         		
-        		/*
-				.on('mouseover', function(){
-					previous_color = d3.select(this).style('fill')
-					previous_opacity = d3.select(this).style('opacity')
-					d3.select(this)
-						.style('fill', 'grey')
-				        .style('stroke', 'none')
-						.style('opacity', 0.4)
-				})
-				.on('mouseout', function(){
-					d3.select(this)
-						.style('fill', previous_color)
-						.style('opacity', previous_opacity)
-				})
-				*/
-			
 			
 			mybox = d3.select('.viewport_selected').select('svg').select('g')
 
@@ -812,22 +788,6 @@ function draw_clicked_violin(clicked_kmers, colors) {
 				.attr('r', 4)
 				.attr('transform', 'translate(' + 0 + ',' + 30 + ')' )
 				.style('fill', 'white')
-			
-			/*
-			mybox.selectAll('.violin_median').select('rect')
-				.data(box_data)
-				.enter()
-				.append('g')
-				.attr('class','violin_box')
-				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
-				.append('rect')
-				.attr('x', function(d){return x(d.q1)})
-				.attr('y', 10)
-				.attr('width', function(d) {return (x(d.q3) - x(d.q1)) } )
-				.attr('height', 10)
-				.style('fill', 'black')
-				.style('opacity', 0.3)
-			*/	
 	
 	}
 }
@@ -836,13 +796,33 @@ function draw_clicked_violin(clicked_kmers, colors) {
 // function to be called when a folder is chosen
 function handleFolder(event){
 	folder = document.getElementById("folder").value
-	d3.select(".tsne").selectAll('.circle').remove()
 	
+	// emptying so previous values don't carry over
+	data_ave = []
+	data_quantiles  =[]
+
+	// resetting colors
+	box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]
+	tsne_colors = []
+
+	// removing all current elements
+	d3.select(".tsne").selectAll('circle').remove()
+	d3.select(".viewport").selectAll("*").remove()
+	d3.select(".viewport_selected").selectAll("*").remove()
+	d3.select(".signal_lines").remove()
+
+	// ensure the dropdown is set to 'box'
+	d3.select("#plot_type").property("value","box")  
+
+	// resetting kmer_list and kmer_size
+	kmer_list = []
+	kmer_size = []
+
 	// Draw boxplots on landing page right after choosing a new folder
 	d3.csv(folder+'/boxplot_data.csv', function(data) {
 		draw_boxplot(data)
 	})
-
+	
 	return false;
 }
 
@@ -852,13 +832,13 @@ function handleType(event){
 	if (text.length == 0) {
 		text = '*****'
 	} else if (text.length == 1) {
-		text = text + '****'
+		text = text.toUpperCase() + '****'
 	} else if (text.length == 2) {
-		text = text + '***'
+		text = text.toUpperCase() + '***'
 	}	else if (text.length == 3) {
-		text = text + '**'
+		text = text.toUpperCase() + '**'
 	} else if (text.length == 4) {
-		text = text + '*'
+		text = text.toUpperCase() + '*'
 	}
 	
 	
@@ -929,12 +909,10 @@ function handleType(event){
 			}
 		}
 					
-				
 		// remove and redraw 
-		
 		if (section == 'box') {
 			draw_boxplot(filtered_data_box)
-		} else if (section == 'violin') {
+		} else {
 			draw_violin(filtered_data_violin, filtered_data_box)
 		}
 	
@@ -1001,7 +979,6 @@ var y0_tsne;
 var brush;
 // function for drawing t-sne
 function draw_tsne(position, kmer_list, kmer_size) {
-	
 	var width = 500;
 	var height = 400;
 	//var padding = 65;
@@ -1831,9 +1808,8 @@ function draw_boxplot(passed_data) {
 					.style('opacity', 0)
 					.on("click", function(d) {
 						// remove signal plots
-						d3.selectAll('.line_click').remove()
-						d3.selectAll('.line_hover').remove()
-						d3.selectAll('.line_brush').remove()
+						d3.select(".signal_lines").remove()
+
 						data_click = []
 						data_hover = []
 						data_brush = []
@@ -1983,7 +1959,6 @@ function draw_boxplot(passed_data) {
 }
 
 function loading_gif(){
-	console.log('gif loading')
 	d3.select("#tsne")
 		.append("svg:image")
 		    .attr('x', 220)
@@ -2073,9 +2048,8 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 				.style('opacity', 0.3)
 				.on("click", function(d) {
 					// remove signal plots
-					d3.selectAll('.line_click').remove()
-					d3.selectAll('.line_hover').remove()
-					d3.selectAll('.line_brush').remove()
+					d3.select(".signal_lines").remove()
+
 					data_click = []
 					data_hover = []
 					data_brush = []
@@ -2112,16 +2086,6 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 
 				
 				.on('mouseover', function(){
-					/*
-					previous_color = d3.select(this).style('fill')
-					previous_opacity = d3.select(this).style('opacity')
-					d3.select(this)
-						.style('fill', 'white')
-				        .style('stroke', 'black')
-					    .style('stroke-width', 3)
-						.style('opacity', 0.4)
-					*/
-
 					d3.select(this)
 						.style('stroke', 'black')
 					    .style('stroke-width', 3)
@@ -2136,12 +2100,7 @@ function draw_clicked_boxplot(clicked_kmers, clicked_colors){
 
 				
 				.on('mouseout', function(){
-					/*
-					d3.select(this)
-						.style('fill', previous_color)
-						.style('opacity', previous_opacity)
-						.style('stroke', 'none')
-					*/
+					
 					d3.select(this)
 						.style('stroke', 'none')
 					draw_signal(data_click,data_hover = [] , data_brush)
@@ -2233,6 +2192,7 @@ function download_csv() {
 	hiddenElement.click();
 }		
 
+// outlying signal plot on landing page
 d3.csv(folder+'/signal_length_max.csv', function(data) {
 	var max_signal_length = data[0]['max_length']
 	// initialize raw signal plot on landing page
@@ -2248,44 +2208,45 @@ d3.csv(folder+'/signal_length_max.csv', function(data) {
 		.append("svg:g")
 			.attr("transform", "translate(" + signal_init.m[1] + "," + signal_init.m[0] + ")")
 		
-		var xScale_signal = d3.scaleLinear()
-							.domain([0, max_signal_length]) //set max value to fix the x-axis
-							.range([0, signal_init.w]);
+	var xScale_signal = d3.scaleLinear()
+			.domain([0, max_signal_length]) //set max value to fix the x-axis
+			.range([0, signal_init.w]);
 
-		 var yScale_signal = d3.scaleLinear().domain([0, 0]).range([signal_init.h, 0]); 
+	var yScale_signal = d3.scaleLinear().domain([0, 0]).range([signal_init.h, 0]); 
 
-		// create xAxis
-		var xAxis_signal = d3.axisBottom()
-					.scale(xScale_signal)
-					.tickSize(-signal_init.h)
-					//.tickSubdivide(true);
-		// Add the x-axis.
-		graph_signal.append("svg:g")
-				.attr("class", "x axis")
-				.attr("transform", "translate(0," + signal_init.h + ")")
-				.call(xAxis_signal);
-		graph_signal.append("text")
-				.attr("transform", "translate(720,235)")
-				.style("text-anchor","middle")
-				.text("time (ms)")
+	// create xAxis
+	var xAxis_signal = d3.axisBottom()
+			.scale(xScale_signal)
+			.tickSize(-signal_init.h)
+			//.tickSubdivide(true);
 
-		// create yaxis
-		var yAxis_signal = d3.axisLeft()
-				.scale(yScale_signal)
-		
-		graph_signal.append("svg:g")
-				.attr("class", "y axis")
-				.attr("transform", "translate(0,0)")
-				.call(yAxis_signal);		
+	// Add the x-axis.
+	graph_signal.append("svg:g")
+			.attr("id", "x_axis_signal")
+			.attr("transform", "translate(0," + signal_init.h + ")")
+			.call(xAxis_signal);
+	graph_signal.append("text")
+			.attr("transform", "translate(720,235)")
+			.style("text-anchor","middle")
+			.text("time (ms)")
 
-		graph_signal.append("text")
-				.attr("transform", "translate(12,-5)")
-				.style("text-anchor","middle")
-				.text("current (mA)")
+	// create yaxis
+	var yAxis_signal = d3.axisLeft()
+			.scale(yScale_signal)
+	
+	graph_signal.append("svg:g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(0,0)")
+			.call(yAxis_signal);		
+
+	graph_signal.append("text")
+			.attr("transform", "translate(12,-5)")
+			.style("text-anchor","middle")
+			.text("current (mA)")
 
 })
 
-var array_export 
+var array_export; 
 
 // normalize only if normalize_state = 1
 var normalize_state = 0
@@ -2329,16 +2290,9 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
     	var w = 800 - m[1] - m[3]; // width
     	var h = 270 - m[0] - m[2]; // height
     	 
-    	
-    	// X scale will fit all values from data[] within pixels 0-w
-    	/*var x_max = 0;
-    	for (var i = data_brush.length - 1; i >= 0; i--) {
-    	    if (data_brush[i].length > x_max) x_max = data_brush[i].length;
-    	};*/
     	var x = d3.scaleLinear()
 					.domain([0, max_signal_length]) //set max value to fix the x-axis
 					.range([0, w]);
-    	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
     	
 		var min = 999999;
 		var max = 0;
@@ -2381,7 +2335,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 					//.tickSubdivide(true);
     	// Add the x-axis.
     	graph.append("svg:g")
-				.attr("class", "x axis")
+				.attr("id", "x_axis_signal")
 				.attr("transform", "translate(0," + h + ")")
 				.call(xAxis);
     	graph.append("text")
@@ -2395,7 +2349,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 				.scale(y)
 		
 		graph.append("svg:g")
-				.attr("class", "y axis")
+				.attr("id", "y_axis_signal")
 				.attr("transform", "translate(0,0)")
 				.call(yAxis);		
 
@@ -2404,9 +2358,13 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 				.style("text-anchor","middle")
 				.text("current (mA)")
 
-				// add lines
+
+		graph = graph.append("svg:g")
+						.attr("class","signal_lines")
+						
+		// add lines
     	// do this AFTER the axes above so that the line is above the tick-lines
-				
+
 		// signal plots for the clicked points
 		graph.selectAll(".line")
 			.data(data_click)
@@ -2491,8 +2449,6 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    				.style("stroke-width", "2")
 		    				.style("opacity", "1")
 			
-
-
 		} else {
 			graph.selectAll(".line")
 				.data(data_brush)
@@ -2514,6 +2470,40 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		}
 		putNodeOnTop(d3.selectAll(".line_hover").nodes());
 		putNodeOnTop(d3.selectAll(".line_hover_kmer").nodes());
+
+		
+		var zoom = d3.zoom()
+			.scaleExtent([1 / 4, 8])
+			.translateExtent([[-Infinity,-h], [Infinity, 2*h]])
+			.on("zoom", zoomed);
+
+		var zoomRect = d3.select('#signal')
+						.append('g')
+							.attr('width', w)
+							.attr('height', h)
+						.append('rect')
+							.attr('width', w)
+							.attr('height', h)
+							.attr('fill', 'none')
+							.attr('pointer-events', 'all')
+							.call(zoom)
+
+		function zoomed() {
+			console.log("zooming")
+			var yz = d3.event.transform.rescaleY(y);   // return a scale with new domain
+			d3.select('#y_axis_signal').call(yAxis.scale(yz));
+			d3.selectAll('.line_ave').attr('d', line.y(function(d) { return yz(d)}));
+			d3.selectAll('.line_click').attr('d', line.y(function(d) { return yz(d)}));
+			d3.selectAll('.line_brush').attr('d', line.y(function(d) { return yz(d)}));
+			//d3.selectAll('.line_hover').attr('d', line.y(function(d) { return yz(d)}));		// not the right way
+			//d3.selectAll('.line_hover_kmer').attr('d', line.y(function(d) { return yz(d)}));    // not the right way
+			d3.selectAll('.quantiles_area').attr('d', area.y0(function(d) {return yz(d.q1)}))
+			d3.selectAll('.quantiles_area').attr('d', area.y1(function(d) {return yz(d.q3)}))
+			
+		}
+
+		//zoomRect.call(zoom.transform, d3.zoomIdentity)
+
 	})
 }
 
@@ -2778,8 +2768,8 @@ svgParameters.append('g')
 	.call(sliderRadius);	
 
 function redraw_tsne(){
-	console.log(opt)
 	d3.select('#tsne').selectAll('circle').remove()	
+	d3.select('.signal_lines').remove()
 	loading_gif()
 	tsne = new tsnejs.tSNE(opt)
 	update_tsne(tsne_data, kmer_list, kmer_size)
