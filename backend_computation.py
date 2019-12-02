@@ -117,7 +117,7 @@ for i in data_all.index:
     val = map(int,data_all.loc[i,'values'].split("_"))
     series_data.append(np.array(list(val), dtype=np.double))
 
-ds = dtw.distance_matrix_fast(series_data,show_progress=True, penalty=penalty)
+ds = dtw.distance_matrix_fast(series_data, penalty=penalty)
 
 ds[np.tril_indices(ds.shape[0],k=-1)] = ds.T[np.tril_indices(ds.shape[0],k=-1)]
 np.fill_diagonal(ds,0)
