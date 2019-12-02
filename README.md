@@ -38,9 +38,9 @@ kmer_list.csv would contains a list of 5-mers in a single column (no header). A 
 
 For example, if the list below is provided, the code would  extract all 5-mers with AAC as the first three letters, and also CCCCC. 
 
-|------|
-|AAC** |  
-|CCCCC |  
+
+AAC** 
+CCCCC 
   
 
 ## Visualization 
