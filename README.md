@@ -1,83 +1,62 @@
 # Sequoia
 
-A web interface tool that can visualize the similarity of nanopore sequencing data
+A web interface tool for visualizing similarities of nanopore sequencing data
 
-In order to use the tool, two separated steps must be executed.  This is because the tool comprises of two major parts. The first part is the dynamic time warping algorithm that measures the similarities between signals. The second part is the visualization based on the data generated from the first part.	
+In order to use the tool, two separated steps must be executed because the tool comprises of two major parts. The first part is a pipeline of python scripts that extract signal data form the input data, compute similarity matrix across all signals using the dynamic time warping algorithm, and perform summary statistics for visualization. The second part is the visualization based on the data generated from the first part.	
 
-## Overview
+## Install
 
-1.) Backend Computation (Python)
+``` git clone https://<i></i>github.com/dnonatar/Sequoia.git ```
 
-Required python library
+## Backend Computation 
+
+Python 3 and the following libraries are required.
 * pandas
 * numpy
-* os 
-* sys
-* dtaidistance (python3 only)
+* h5py
+* dtaidistance 
 
 Please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
 
-Input format 
-
-read_ID | kmer | values
------------- | ------------- | ------------
-...... | AACAA | 628_671_629_658_673_718_717_698_691_700....
-...... | AACCC | 628_671_629_658_673_718_717_698_691_700....
-...... | ...... | ......
- 
 #### Usage
 
-``` python  backend_computation.py arg1 arg2 arg3```
+``` python backend_computation.py arg1 arg2 arg3 arg4 ```
 
 Parameters 
-* arg1 : directory of input file (csv)
-* arg2 : dynamic time warping penalty (integer)
-* arg3 : output directory
+* arg1 : directory of a fast5 input file 
+* arg2 : dynamic time warping penalty (for the simplest case, set equal to 0)
+* arg3 : csv file with a list of 5-mer of interest
+* arg4 : output directory
 
-After running backend_computation.py, a new folder wil be created (as you specified in arg3). In the folder, there are subfolders and a file necessary for the visualization as follows.
-* distance_matrices : a folder containing distances among signals
-* raw_signal : a folder containing raw signals of each kmer
-* boxplot_data.csv : a csv file containing information for drawing boxplots 
+After running backend_computation.py, a new folder containing subfolders and files necessary to generate the visualization will be created.
 
 Example:
 
-``` python ./backend_computation.py data.csv 0 ./myoutput```
+``` python ./backend_computation.py data.csv 0 kmer_list.csv ./myoutput ```
 
+kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
-2.) Visualization (D3.js)
+For example, if the list below is provided, the code would  extract all 5-mers with AAC as the first three letters, and also CCCCC. 
 
-First, download the web server for Chrome from here
-https://chrome.google.com/webstore/detail/web-server-for-chrome/ofhbbkphhbklhfoeikjpcbhemlocgigb?hl=en
+|------|
+|AAC** |  
+|CCCCC |  
+  
 
-To start the visualization:
-1. Place index.html into the same directory as the output folder from the previous step
-2. Open the Web Server from Chrome
-3. In the Web Server, click at CHOOSE FOLDER and select the directory that you placed both the output folder and index.html
-4. open the Web Server URL and click index.html
+## Visualization 
 
-## Demo
-This is the visualization demo with pre-loaded data. Use 'data' for the input folder.
+To start the web interface for visualization, investigate to the output directory where the output folder is placed and use the following command to start a local web server.
 
-http://research.vis.ninja/sequoia/
+``` python -m http.server ```
 
-## Visualization Tutorial
+Then, open the url and select index.html.
 
-This is how the landing page looks like. In the 'Type Input Folder' textbox, type in the name of the folder you would like to use. Once you click 'Choose', the boxplots for each of the 256 kmers will show up.
+Below is how the landing page looks like. In the 'Type Input Folder' textbox, type in the name of the output folder you would like to explore. For instance, type 'myoutput' if you would like to use the output generated in the example above. Once click 'Choose', the boxplots for each of the 5-mers will show up. 
 
 ![image 1](/images/landing_page.png)
 
-The boxplots can be sorted by either the alphabets, medians, or the max values of the distances within each kmer. The textbox next to the sorting option helps filtering the kmers. You can type \* to mean "any alphabet". For example, if you type \*CCC\*, all kmers with CCC in the middle would come up. 
+## Demo
+This is the visualization demo with pre-loaded data.
 
-![image 2](/images/textbox.png)
-
-By clicking at the kmer in the boxplots panel, signals from each kmer can be displayed on the t-SNE plot. Up to 4 kmers can be chosen. Chosen kmers are moved to the 'Selected  Kmers' panel. Clicking at a kmer in that panel would remove it from the t-SNE plot and move it back to the above panel.
-
-![image 3](/images/second_screen.png)
-
-
-If you click (or hover) at a point in the t-SNE plot, the raw signal corresponding to that point would be displayed above. You can also use a brush(mouse dragging) to select a group of points.
-
-![image 4](/images/brush.png)
-
-
+http://research.vis.ninja/sequoia/
 
