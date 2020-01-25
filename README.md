@@ -32,15 +32,15 @@ After running backend_computation.py, a new folder containing subfolders and fil
 
 Example:
 
-``` python ./backend_computation.py data.csv 0 kmer_list.csv ./myoutput ```
+``` python backend_computation.py test.fast5 0 kmer_list.csv myoutput ```
 
 kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
 For example, if the list below is provided, the code would  extract all 5-mers with AAC as the first three letters, and also CCCCC. 
 
-|------|
-|AAC** |  
-|CCCCC |  
+
+AAC**   
+CCCCC 
   
 
 ## Visualization 
