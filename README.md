@@ -2,11 +2,11 @@
 
 A web interface tool for visualizing similarities of nanopore sequencing data
 
-In order to use the tool, two separated steps must be executed because the tool comprises of two major parts. The first part is a pipeline of python scripts that extract signal data form the input data, compute similarity matrix across all signals using the dynamic time warping algorithm, and perform summary statistics for visualization. The second part is the visualization based on the data generated from the first part.	
+To use the tool, two separated steps must be executed. The first step is to run a python script via command line which will extract signal data from the input data and perform necessary computations. The second step is to open the visualization interface using the computational output from the first step.	
 
 ## Install
 
-``` git clone https://<i></i>github.com/dnonatar/Sequoia.git ```
+``` git clone https://github.com/dnonatar/Sequoia.git ```
 
 ## Backend Computation 
 
@@ -20,19 +20,20 @@ Please refer to https://dtaidistance.readthedocs.io/en/latest/ for further detai
 
 #### Usage
 
-``` python backend_computation.py arg1 arg2 arg3 arg4 ```
+``` python backend_computation.py [--f1 F1] [--f2 F2] [--p P] [--k K] [--s S] [--o O] ```
 
 Parameters 
-* arg1 : directory of a fast5 input file 
-* arg2 : dynamic time warping penalty (for the simplest case, set equal to 0)
-* arg3 : csv file with a list of 5-mer of interest
-* arg4 : output directory
+* F1 : Fast5 file for modified signals (required)
+* F2 : Fast5 file for unmodified signals (optional)
+* P : Dynamic time warping penalty (optional, default = 0)
+* K : CSV file with a list of 5-mer of interest (required)
+* S : Sample size for each 5-mer (optional, default = 100)
+* O : Output directory (required)
 
-After running backend_computation.py, a new folder containing subfolders and files necessary to generate the visualization will be created.
 
 Example:
 
-``` python backend_computation.py test.fast5 0 kmer_list.csv myoutput ```
+``` python backend_computation_new.py --f1 test1.fast5 --f2 test2.fast5 --k kmer_list.csv --o myputput ```
 
 kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
@@ -41,7 +42,9 @@ For example, if the list below is provided, the code would  extract all 5-mers w
 
 AAC**   
 CCCCC 
-  
+
+
+After running backend_computation.py, a new folder containing subfolders and files to be used for the visualization will be created.
 
 ## Visualization 
 
@@ -51,7 +54,7 @@ To start the web interface for visualization, investigate to the output director
 
 Then, open the url and select index.html.
 
-Below is how the landing page looks like. In the 'Type Input Folder' textbox, type in the name of the output folder you would like to explore. For instance, type 'myoutput' if you would like to use the output generated in the example above. Once click 'Choose', the boxplots for each of the 5-mers will show up. 
+Below is how the landing page looks like. In the 'Type Input Folder' textbox, type in the name of the output folder you would like to explore. For instance, type 'myoutput' and click 'Choose' if you would like to use the output generated in the example above. 
 
 ![image 1](/images/landing_page.png)
 
