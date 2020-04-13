@@ -12,7 +12,7 @@
 <script src="https://unpkg.com/mathjs@6.2.3/dist/math.min.js"></script>
 
 <style>
-/* tell the SVG path to be a thin blue line without any area fill */
+
 	body {
 		font-family: sans-serif;
 	}
@@ -53,10 +53,21 @@
 	.x.axis text { 
 		font-size: 14; 
 	} 
-	.y.axis line, .y.axis
-    path { fill: none; stroke: #000; } .y.axis text { font-size: 14; } .y.axisRight
-    text { fill: orange; } .y.axisLeft text { fill: steelblue; } 
+
+
+	.y.axis line, .y.axis path { 
+		fill: none; 
+		stroke: #000; 
 	
+	} 
+	.y.axis text { 
+		font-size: 14; 
+	} 
+	
+	
+	
+
+
 	.kmer-filter {
         position: absolute;
         top: 70px;
@@ -142,9 +153,15 @@
     	left: 1130px;
 	}
 
-	.average_button {
+	.median_button {
 		position: absolute;
 		top: 80px;
+    	left: 1130px;
+	}
+
+	.mean_button {
+		position: absolute;
+		top: 110px;
     	left: 1130px;
 	}
 
@@ -255,10 +272,14 @@
 	<button onclick="normalize_signals()"> Normalize </button> 
 </div>
 
-<div class = "average_button">
-	<button onclick="average_signals()"> Average </button> 
+<div class = "median_button">
+	<button onclick="median_signals()"> Median and Quantiles </button> 
 </div>
-
+<!--
+<div class = "mean_button">
+	<button onclick="mean_signals()"> Mean and Standard Deviation </button> 
+</div>
+-->
 <script type="text/javascript">
 var box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]
 var tsne_colors = []
@@ -366,53 +387,51 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 			});
 		}
 		
-
 		// set the dimensions and margins of the graph
-		var margin = {top: 35, right: 20, bottom: 30, left: 60},
-		    width = 460 - margin.left - margin.right,
-		    height = 8400 - margin.top - margin.bottom;
+		var margin = {top: 20, right: 20, bottom: 20, left: 80},
+		    width = 580 - margin.left - margin.right,
+			height = 30 * box_data.length    // height is dependent on the number of unique k-mer 
+			
 
 		// append the svg object to the body of the page
 		var svg = d3.select(".viewport")
 		  .append("svg")
 		    .attr("width", width + margin.left + margin.right)
-		    .attr("height", height + margin.top + margin.bottom)
-		  .append("g")
-		    .attr("transform",
-		          "translate(" + margin.left + "," + margin.top + ")");
-
+			.attr("height", height + margin.top + margin.bottom)
+		  
 		// Read the data and compute summary statistics for each 
 		
-		var kmerValues = violin_data.map(d => d['kmer'])
-
+		var kmerValues = box_data.map(d => d['kmer'])
+		
 		// Build and Show the x scale
 		var x = d3.scaleLinear()
-		  .domain([ 0,2500 ])          
+		  .domain([ 0,8000 ])          
 		  .range([0, width])
+
 		svg.append("g")
-			.attr("transform", "translate(" + 0 +","+0+ ")")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.style("font", "14px times")
 			.call( d3.axisTop(x) )
 		      .selectAll('text')
-		        .style("text-anchor", "start")
-		        .attr("transform", "translate(12,-7)rotate(-90)");
+		        .style("text-anchor", "middle")
 
-		// Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis.
+		var y = d3.scalePoint()
+				.domain(kmerValues)
+				.range([margin.top+30, height])
 		
-		var y = d3.scaleBand()
-			.domain(kmerValues)
-		    //.range([ 0, height ])
-		    .range([ 0, height/kmer_number*box_data.length ])
-		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
+		var yAxis = d3.axisRight()
+				.scale(y)
+				.tickSize(0)
+
 		  svg.append("g")
 		  	 .style("font", "14px times")
-		  	 .style("font-weight", "bold")
-		    .attr("transform", "translate(" + 0 +","+0+ ")")
-		    .call(d3.axisLeft(y))
+		  	 .style("font-weight", "bold")    
+		    .call(yAxis)
 
 		  // Features of the histogram
 		var histogram = d3.histogram()
 		    .domain(x.domain())
-		    .thresholds(x.ticks(20))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+		    .thresholds(x.ticks(55))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
 		    .value(d => d)
 
 		// Compute the binning for each group of the dataset
@@ -424,7 +443,8 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		      return(bins)
 		    })
 		    .entries(violin_data)
-
+		
+		
 
 		// Attach median and max values to sumstat 
 		for (i =0; i < box_data.length; i++) {
@@ -432,8 +452,6 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 			sumstat[i]['max'] = box_data[i]['max']		
 		}
 		   
-		   
-
 		// What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
 		var maxNum = 0
 		for ( i in sumstat ){
@@ -446,38 +464,47 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 		// The maximum width of a violin must be y.bandwidth = the width dedicated to a group
 		var yNum = d3.scaleLinear()
 		  	.domain([-maxNum,maxNum])
-		    .range([0, y.bandwidth()])
-		    
-
+		    //.range([0, y.step()])
+			.range([0, 30])
+		
 		// Add the shape to this svg!
 		violins = svg.selectAll("myViolin")
-
 		    .data(sumstat)
 		    .enter()        // So now we are working group per group
 		    .append("g")
-		      .attr("transform", function(d){ return("translate(0," + y(d.key) +")") } ) // Translation vertically to be at the group position
-		    
+		      .attr("transform", function(d){ return("translate("+ margin.left+ "," + y(d.key) +")") } ) // Translation vertically to be at the group position
+
 	    violins.append("path")
 	        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+			.attr("class","violin")
 	        .style("stroke", "none")
 	        .style("fill","#240acc")
 	        .style("opacity",0.5)
 	        .attr("d", d3.area()
-	            .y0(function(d){ return(yNum(-d.length)) } )
-	            .y1(function(d){ return(yNum(d.length)) } )
-	            .x(function(d){ return(x(d.x0)) } )
+	            .y0(function(d){ return(yNum(-d.length)-15) } )
+				.y1(function(d){ return(yNum(d.length)-15) } )
+	            .x(function(d){ 
+					return(x(d.x0)) 
+				} )
 	            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
 	            
 	        )
+
+	    // move each violin to the correct x position...still not right
+		d3.selectAll(".violin")
+			.each(function(d,i){
+				//d3.select(this).attr("transform",function(d){ return("translate("+ x(+box_data[i]["min"])+ "," + 0 +")") } )
+			})
 	        
+		
 
 	    violins.append('rect')
 	        .attr('class', 'cover')
 	        .attr('id', function(d){return (d.key +'_violin')})
-	        .attr('x', -60)
-	        .attr('y', 0)
+	        .attr('x', -150)
+	        .attr('y', -15)
 	        .attr('height', 30)
-	        .attr('width', 480)
+	        .attr('width', 800)
 	        .style('fill', 'white')
 	        .style('stroke', 'black')
 	        .style('stroke-width', '1px')
@@ -558,18 +585,18 @@ function draw_violin(filtered_data_violin, filtered_data_box) {
 			})	
 		*/
 
-		mybox = d3.select('.viewport').select('svg').select('g')
+		mybox = d3.select('.viewport').select('svg')
 
 		mybox.selectAll('circle')
 			.data(box_data)
 			.enter()
 			.append('g')
 			.attr('class','violin_median')
-			.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
+			.attr("transform", function(d){ return("translate("+margin.left +"," + y(d.kmer) + ")") } )
 			.append('circle')
 			.attr('cx', function(d){ return x(d.median)})
 			.attr('r', 3)
-			.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+			//.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
 			.style('fill', 'white')
 		
 		for (i = 0; i<kmer_list.length; i++) {
@@ -612,55 +639,50 @@ function draw_clicked_violin(clicked_kmers, colors) {
 		box_data = clicked_box    // need this to get the median
 		kmerValues = clicked_kmers
 
+		console.log(box_data)
 		// set the dimensions and margins of the graph
-		var margin = {top: 10, right: 20, bottom: 30, left: 60},
-		    width = 460 - margin.left - margin.right,
-		    height = 280 
+		var margin = {top: 20, right: 20, bottom: 20, left: 80},
+		    width = 580 - margin.left - margin.right,
+			height = 30 * box_data.length    // height is dependent on the number of unique k-mer 
+			
 
 		// append the svg object to the body of the page
 		var svg = d3.select(".viewport_selected")
 		  .append("svg")
 		    .attr("width", width + margin.left + margin.right)
-		    .attr("height", height )
-		  .append("g")
-		    .attr("transform",
-		          "translate(" + margin.left + "," + margin.top + ")");
+			.attr("height", height + margin.top + margin.bottom)		  
 
 		// Read the data and compute summary statistics for each species
 		
-		  var kmerValues = violin_data.map(d => d['kmer'])
+		var kmerValues = violin_data.map(d => d['kmer'])
 		  // Build and Show the x scale
-		  var x = d3.scaleLinear()
-		    .domain([ 0,2500 ])          
+		var x = d3.scaleLinear()
+		    .domain([ 0,8000 ])          
 		    .range([0, width])
-		  /*  
-		  svg.append("g")
-		  	.attr("transform", "translate(" + 0 +","+0+ ")")
-		  	.call( d3.axisTop(x) )
-		        .selectAll('text')
-		          .style("text-anchor", "start")
-		          .attr("transform", "translate(12,-7)rotate(-90)");
-		  */
+		
 		  
-		  // Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. 
-		  var y = d3.scaleBand()
-		  	.domain(kmerValues)
-		    .range([ 0, height/4*clicked_kmers.length ])
-		    .padding(0.05)     //  it is the space between 2 groups. 0 means no padding. 1 is the maximum.
-		  svg.append("g")
-		  	 .style("font", "14px times")
-		  	 .style("font-weight", "bold")
-		    .attr("transform", "translate(" + 0 +","+0+ ")")
-		    .call(d3.axisLeft(y))
+		// Build and Show the y scale. It is a band scale like for a boxplot: each group has an dedicated RANGE on the axis. 
+		var y = d3.scalePoint()
+			.domain(kmerValues)
+			.range([margin.top, height])
+		
+		var yAxis = d3.axisRight()
+				.scale(y)
+				.tickSize(0)
 
-		  // Features of the histogram
-		  var histogram = d3.histogram()
+		svg.append("g")
+			.style("font", "14px times")
+			.style("font-weight", "bold")    
+		.call(yAxis)
+
+		// Features of the histogram
+		var histogram = d3.histogram()
 		        .domain(x.domain())
-		        .thresholds(x.ticks(20))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
+		        .thresholds(x.ticks(55))    // Important: how many bins approx are going to be made? It is the 'resolution' of the violin plot
 		        .value(d => d)
 
-		  // Compute the binning for each group of the dataset
-		  var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
+		// Compute the binning for each group of the dataset
+		var sumstat = d3.nest()  // nest function allows to group the calculation per level of a factor
 		    .key(function(d) { return d.kmer;})
 		    .rollup(function(d) {   // For each key..
 		      input = d.map(function(g) { return g.ave_distance;})    // Keep the variable called ave_distance     
@@ -669,125 +691,127 @@ function draw_clicked_violin(clicked_kmers, colors) {
 		    })
 		    .entries(violin_data)
 
-		  // What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
-		  var maxNum = 0
-		  for ( i in sumstat ){
-		    allBins = sumstat[i].value
-		    lengths = allBins.map(function(a){return a.length;})
-		    longest = d3.max(lengths)
-		    if (longest > maxNum) { maxNum = longest }
-		  }
+		// What is the biggest number of value in a bin? We need it cause this value will have a width of 100% of the bandwidth.
+		var maxNum = 0
+		for ( i in sumstat ){
+			allBins = sumstat[i].value
+			lengths = allBins.map(function(a){return a.length;})
+			longest = d3.max(lengths)
+			if (longest > maxNum) { maxNum = longest }
+		}
 
-		  // The maximum width of a violin must be y.bandwidth = the width dedicated to a group
-		  var yNum = d3.scaleLinear()
+		// The maximum width of a violin must be y.bandwidth = the width dedicated to a group
+		var yNum = d3.scaleLinear()
 		  	.domain([-maxNum,maxNum])
-		    .range([0, 60])
-		    
+		    //.range([0, y.step()])
+			.range([0, 30])    
 
-		  // Add the shape to this svg!
-		  violins = svg.selectAll("myViolin")
+		// Add the shape to this svg!
+		violins = svg.selectAll("myViolin")
 		    .data(sumstat)
 		    .enter()        // So now we are working group per group
 		    .append("g")
-		      .attr("transform", function(d){ return("translate(0," + y(d.key) +")") } ) // Translation vertically to be at the group position
-		    
-		    violins.append("path")
-		        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
-		        .style("stroke", "none")
-		        .style("fill","#240acc")
-		        .style("opacity",0.7)
-		        .attr("d", d3.area()
-		            .y0(function(d){ return(yNum(-d.length)) } )
-		            .y1(function(d){ return(yNum(d.length)) } )
-		            .x(function(d){ return(x(d.x0)) } )
-		            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. 
-		            
-		        )
-		        
+		      .attr("transform", function(d){ return("translate("+ margin.left+ "," + y(d.key) +")") } ) // Translation vertically to be at the group position
 
-		    violins.append('rect')
-		        .attr('class', 'cover')
-		        .attr('x', -60)
-		        .attr('y', 0)
-		        .attr('height', 60)
-		        .attr('width', 480)
-		        .style('fill', function(d,i) {return colors[i]} )
-		        .style('stroke', 'none')
-		        .style('stroke-width', '1px')
-				.style('opacity', 0.5)
+	    violins.append("path")
+	        .datum(function(d){ return(d.value)})     // So now we are working bin per bin
+			.attr("class","violin")
+	        .style("stroke", "none")
+	        .style("fill","#240acc")
+	        .style("opacity",0.5)
+	        .attr("d", d3.area()
+	            .y0(function(d){ return(yNum(-d.length)-15) } )
+				.y1(function(d){ return(yNum(d.length)-15) } )
+	            .x(function(d){ 
+					return(x(d.x0)) 
+				} )
+	            .curve(d3.curveCatmullRom)    // This makes the line smoother to give the violin appearance. Try d3.curveStep to see the difference
+	            
+	        )      
+
+		violins.append('rect')
+			.attr('class', 'cover')
+			.attr('x', -150)
+			.attr('y', -15)
+			.attr('height', 30)
+			.attr('width', 800)
+			.style('fill', function(d,i) {return colors[i]} )
+			.style('stroke', 'none')
+			.style('stroke-width', '1px')
+			.style('opacity', 0.3)
+			
+			.on("click", function(d) {
+				// remove signal plots
+				d3.select(".signal_lines").remove()
 				
-        		.on("click", function(d) {
-        			// remove signal plots
-					d3.select(".signal_lines").remove()
-					
-					data_click = []
-					data_hover = []
-					data_brush = []
-					data_brush_byKmer = {}
+				data_click = []
+				data_hover = []
+				data_brush = []
+				data_brush_byKmer = {}
 
-					box_colors.push(d3.select(this).style("fill"))
-					tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
-					index = kmer_list.indexOf(d.key)
-					kmer_list.splice(index, 1)
-					
-					// remove color from the all-kmer panel
-					clicked_id = d.key+'_violin'
-					d3.select('#'+clicked_id).style('fill','white')
-					d3.select('#'+clicked_id).style('opacity',0)
-					
-					// redraw clicked violin
-					draw_clicked_violin(kmer_list, tsne_colors)
-					
-					// redraw t-SNE
-					if (kmer_list.length == 1) {
-							combine_1_kmer(kmer_list)
-					} else if (kmer_list.length == 2) {
-							combine_2_kmers(kmer_list)
-					} else if (kmer_list.length == 3) {
-							combine_3_kmers(kmer_list)
-					} else if (kmer_list.length == 4) {
-							combine_4_kmers(kmer_list)
-					} else{
-							d3.select('#tsne').selectAll('circle').remove()
-					}
+				box_colors.push(d3.select(this).style("fill"))
+				tsne_colors.splice(tsne_colors.indexOf(d3.select(this).style("fill")),1)
+				index = kmer_list.indexOf(d.key)
+				kmer_list.splice(index, 1)
+				
+				// remove color from the all-kmer panel
+				clicked_id = d.key+'_violin'
+				d3.select('#'+clicked_id).style('fill','white')
+				d3.select('#'+clicked_id).style('opacity',0)
+				
+				// redraw clicked violin
+				draw_clicked_violin(kmer_list, tsne_colors)
+				
+				// redraw t-SNE
+				if (kmer_list.length == 1) {
+						combine_1_kmer(kmer_list)
+				} else if (kmer_list.length == 2) {
+						combine_2_kmers(kmer_list)
+				} else if (kmer_list.length == 3) {
+						combine_3_kmers(kmer_list)
+				} else if (kmer_list.length == 4) {
+						combine_4_kmers(kmer_list)
+				} else{
+						d3.select('#tsne').selectAll('circle').remove()
+				}
+		
+			})
+			.on('mouseover', function(d,i){
+									
+				d3.select(this)
+					.style('stroke', 'black')
+					.style('stroke-width', 3)
+
+				// Execute only if there is an element in brush (to avoid throwing error)   
+				if (!jQuery.isEmptyObject(data_brush_byKmer)) {
+					hovered_kmer_color = colors[i]
+					data_hover_kmer = data_brush_byKmer[d.key]
+					draw_signal(data_click,data_hover, data_brush, data_hover_kmer)
+				}
+
+			})
+
+			.on('mouseout', function(){
+				d3.select(this)					
+					.style('stroke', 'none')
+
+				draw_signal(data_click,data_hover = [] , data_brush)
+			})
 			
-				})
-				.on('mouseover', function(d,i){
-										
-					d3.select(this)
-						.style('stroke', 'black')
-					    .style('stroke-width', 3)
-
-					// Execute only if there is an element in brush (to avoid throwing error)   
-					if (!jQuery.isEmptyObject(data_brush_byKmer)) {
-						hovered_kmer_color = colors[i]
-						data_hover_kmer = data_brush_byKmer[d.key]
-						draw_signal(data_click,data_hover, data_brush, data_hover_kmer)
-					}
-
-				})
-
-				.on('mouseout', function(){
-					d3.select(this)					
-						.style('stroke', 'none')
-
-					draw_signal(data_click,data_hover = [] , data_brush)
-				})
-        		
 			
-			mybox = d3.select('.viewport_selected').select('svg').select('g')
+		mybox = d3.select('.viewport_selected').select('svg')
 
-			mybox.selectAll('circle')
-				.data(box_data)
-				.enter()
-				.append('g')
-				.attr('class','violin_median')
-				.attr("transform", function(d){ return("translate(0," + y(d.kmer) + ")") } )
-				.append('circle')
-				.attr('cx', function(d){ return x(d.median)})
-				.attr('r', 4)
-				.attr('transform', 'translate(' + 0 + ',' + 30 + ')' )
-				.style('fill', 'white')
+		mybox.selectAll('circle')
+			.data(box_data)
+			.enter()
+			.append('g')
+			.attr('class','violin_median')
+			.attr("transform", function(d){ return("translate("+margin.left +"," + y(d.kmer) + ")") } )
+			.append('circle')
+			.attr('cx', function(d){ return x(d.median)})
+			.attr('r', 3)
+			//.attr('transform', 'translate(' + 0 + ',' + 15 + ')' )
+			.style('fill', 'white')
 	
 	}
 }
@@ -798,8 +822,10 @@ function handleFolder(event){
 	folder = document.getElementById("folder").value
 	
 	// emptying so previous values don't carry over
-	data_ave = []
-	data_quantiles  =[]
+	data_median = []
+	data_quantiles  = []
+	data_mean = []
+	data_sd = []
 
 	// resetting colors
 	box_colors = ["rgb(51, 160, 44)","rgb(31, 120, 180)","rgb(18, 38, 26)","rgb(255, 127, 0)"]
@@ -1227,7 +1253,7 @@ var data_brush_kmer1 = []
 var data_brush_kmer2 = []
 var data_brush_kmer3 = []
 var data_brush_kmer4 = []
-var data_ave = []
+var data_median = []
 
 function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 	data_brush_kmer1.length = 0
@@ -1258,20 +1284,31 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 					data_export_brush.push(d[row])
 				}
 
-
-				draw_signal(data_click, data_hover, data_brush)
-
 				data_brush_byKmer = {}
 				data_brush_byKmer[kmer_list[0]] = data_brush
 
-				data_ave1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_median(x))
+				// median + quantiles
+				data_median1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_median(x))
 				array_q1_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_q1(x))
 				array_q3_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_q3(x))
 				data_q_1 = combine_Q(array_q1_1,array_q3_1)
 				
 				// data to be used in the draw_signal function
 				data_quantiles = [data_q_1]
-				data_ave = [data_ave1]
+				data_median = [data_median1]
+
+				// mean + sd
+				data_mean1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_mean(x))
+				array_sd_high_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_mean(x) + get_sd(x))
+				array_sd_low_1 = _.zip.apply(_, data_brush).map(x => filter_null(x)).map(x => get_mean(x) - get_sd(x))
+				data_sd_1 = combine_Q(array_sd_high_1,array_sd_low_1)
+				
+				// data to be used in the draw_signal function
+				data_sd = [data_sd_1]
+				data_mean = [data_mean1]
+
+				draw_signal(data_click, data_hover, data_brush)
+
 			
 			}
 
@@ -1309,8 +1346,9 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[0]] = data_brush_kmer1
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			// median + quantiles
+			data_median1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_median2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
 			
 			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
 			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
@@ -1322,8 +1360,23 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 				
 			// data to be used in the draw_signal function
 			data_quantiles = [data_q_1, data_q_2]
-			data_ave = [data_ave1, data_ave2]
+			data_median = [data_median1, data_median2]
 
+			// mean + quantiles
+			data_mean1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_mean(x))
+			data_mean2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_mean(x))
+			
+			array_sd_high_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_mean(x) + get_sd(x))
+			array_sd_low_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_mean(x) - get_sd(x))
+			data_sd_1 = combine_Q(array_sd_high_1,array_sd_low_1)
+				
+			array_sd_high_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_mean(x) + get_sd(x))
+			array_sd_low_2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_mean(x) - get_sd(x))
+			data_sd_2 = combine_Q(array_sd_high_2,array_sd_low_2)
+
+			// data to be used in the draw_signal function
+			data_sd = [data_sd_1, data_sd_2]
+			data_mean = [data_mean1, data_mean2]
 			draw_signal(data_click, data_hover, data_brush)
 
 		}
@@ -1365,9 +1418,9 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[1]] = data_brush_kmer2
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
+			data_median1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_median2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			data_median3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
 
 			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
 			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
@@ -1383,7 +1436,7 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 				
 			// data to be used in the draw_signal function
 			data_quantiles = [data_q_1, data_q_2, data_q_3]
-			data_ave = [data_ave1, data_ave2, data_ave3]
+			data_median = [data_median1, data_median2, data_median3]
 
 			draw_signal(data_click, data_hover, data_brush)
 		}
@@ -1431,10 +1484,10 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 			data_brush_byKmer[kmer_list[2]] = data_brush_kmer3
 			data_brush_byKmer[kmer_list[3]] = data_brush_kmer4
 
-			data_ave1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
-			data_ave4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_median(x))
+			data_median1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_median(x))
+			data_median2 = _.zip.apply(_, data_brush_kmer2).map(x => filter_null(x)).map(x => get_median(x))
+			data_median3 = _.zip.apply(_, data_brush_kmer3).map(x => filter_null(x)).map(x => get_median(x))
+			data_median4 = _.zip.apply(_, data_brush_kmer4).map(x => filter_null(x)).map(x => get_median(x))
 
 			array_q1_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q1(x))
 			array_q3_1 = _.zip.apply(_, data_brush_kmer1).map(x => filter_null(x)).map(x => get_q3(x))
@@ -1454,7 +1507,7 @@ function add_signal_brush(row_list, kmer_list, currentBrushEvent) {
 				
 			// data to be used in the draw_signal function
 			data_quantiles = [data_q_1, data_q_2, data_q_3, data_q_4]
-			data_ave = [data_ave1, data_ave2, data_ave3, data_ave4]
+			data_median = [data_median1, data_median2, data_median3, data_median4]
 			draw_signal(data_click, data_hover, data_brush)
 		}
 	}
@@ -1715,22 +1768,20 @@ function draw_boxplot(passed_data) {
 			});
 		}
 		
-
-		var w = 580
-		var h = 7500*data.length /kmer_number
 		var margin = {
-		    top: 40,
+		    top: 20,
 		    bottom: 20,
-		    left: 20,
-		    right: 30
+		    left: 80,
+		    right: 20
 	  	}
-	  	
+		  
+		var w = 580 - margin.left - margin.right
+		var h = 30 * data.length			// height for each box is 30
+
 		d3.select('.viewport')
 	    	.append('svg')
-			    .attr('height', h)
-			    .attr('width', w)
-			    //.attr("transform","translate(" + margin.left + "," + margin.top + ")");
-
+			    .attr('height', h + margin.top + margin.bottom)
+			    .attr('width', w + margin.left + margin.right)
 
 		var catVariable = 'order'
 		var catValues = data.map(d => Number(d[catVariable]))
@@ -1740,15 +1791,11 @@ function draw_boxplot(passed_data) {
 	    const medianVariable = 'median'
 	    const q1Variable = 'q1'
 	    const q3Variable = 'q3'
-
+		  
+		
 		var xScale = d3.scaleLinear()
 			.domain([0,8000])
-			.range([margin.left, w- margin.right-50])
-		/*
-		var x = d3.scaleLinear()
-			  .domain([ 0,2500 ])          
-			  .range([0, width])
-		*/
+			.range([0, w])
 			
 		var xAxis = d3.axisTop() 
 						.scale(xScale)
@@ -1756,7 +1803,7 @@ function draw_boxplot(passed_data) {
 
 		var yScale = d3.scalePoint()
 				.domain(kmerValues)
-				.range([margin.top,h - margin.bottom])
+				.range([margin.top+30,h])
 		
 		var yAxis = d3.axisRight()
 						.scale(yScale)
@@ -1768,7 +1815,7 @@ function draw_boxplot(passed_data) {
 		d3.select('svg')
 			.append('g')
 				.style("font", "14px times")
-				.attr('transform', 'translate(40,20)')
+				.attr("transform","translate(" + margin.left + "," + margin.top + ")")
 				.attr('id', 'xAxisG')
 				.call(xAxis)
 
@@ -1776,7 +1823,6 @@ function draw_boxplot(passed_data) {
 			.append('g')
 				.style("font", "14px times")
 				.style("font-weight", "bold")
-				.attr('transform', 'translate(0,0)')
 				.attr('id', 'yAxisG')
 				.call(yAxis)
 
@@ -1790,7 +1836,7 @@ function draw_boxplot(passed_data) {
 			.append('g')
 			.attr('class', 'box')
 			.attr(
-				'transform', d => `translate(${xScale(d[medianVariable])+40},${yScale(d['kmer'])})`
+				'transform', d => `translate(${xScale(d[medianVariable]) + margin.left},${yScale(d['kmer'])})`
 			)
 			
 			.each(function(d, i) {
@@ -2228,7 +2274,7 @@ d3.csv(folder+'/signal_length_max.csv', function(data) {
 	graph_signal.append("text")
 			.attr("transform", "translate(720,235)")
 			.style("text-anchor","middle")
-			.text("time (ms)")
+			.text("Length")
 
 	// create yaxis
 	var yAxis_signal = d3.axisLeft()
@@ -2242,7 +2288,7 @@ d3.csv(folder+'/signal_length_max.csv', function(data) {
 	graph_signal.append("text")
 			.attr("transform", "translate(12,-5)")
 			.style("text-anchor","middle")
-			.text("current (mA)")
+			.text("Current (pA)")
 
 })
 
@@ -2255,11 +2301,21 @@ function normalize_signals(){
 	normalize_state = (normalize_state==0) ? 1 : 0;
 }
 
-//average only if ave_state = 1
-var average_state = 0
-function average_signals(){
+//show median line only if median_state = 1
+var median_state = 0
+function median_signals(){
+	mean_state = (mean_state==1) ? 0 : 0; // mean and median state can't both be 1 simultaneously
+
 	draw_signal(data_click,data_hover, data_brush)
-	average_state = (average_state==0) ? 1 : 0;
+	median_state = (median_state==0) ? 1 : 0;
+}
+
+var mean_state = 0
+function mean_signals(){
+	median_state = (median_state==1) ? 0 : 0;	// mean and median state can't both be 1 simultaneously
+
+	draw_signal(data_click,data_hover, data_brush)
+	mean_state = (mean_state==0) ? 1 : 0;
 }
 
 // draw raw signals based on the data passed from add_signal
@@ -2311,7 +2367,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
     		.x(function(d, i) { return x(i); }) 
     		.y(function(d) { return y(d); })
 
-    	// define the area for average plot
+    	// define the area for median plot
     	var area = d3.area()
     		.curve(d3.curveMonotoneX)
     		.x(function(d,i) {return x(i); })
@@ -2341,7 +2397,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
     	graph.append("text")
 				.attr("transform", "translate(720,235)")
 				.style("text-anchor","middle")
-				.text("time (ms)")
+				.text("Length")
 
 
 		// create yaxis
@@ -2356,7 +2412,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		graph.append("text")
 				.attr("transform", "translate(12,-5)")
 				.style("text-anchor","middle")
-				.text("current (mA)")
+				.text("Current (pA)")
 
 
 		graph = graph.append("svg:g")
@@ -2415,7 +2471,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 	    }
 
 		// signal plots for the brushed points
-		if (average_state!=0) {
+		if (median_state!=0) {
 			graph.selectAll(".area")
 				 .data(data_quantiles)
 				 .enter().append("path")
@@ -2432,10 +2488,10 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 				 			.style("opacity", "0.3")
 
 			graph.selectAll(".line")
-				.data(data_ave)
+				.data(data_median)
 				.enter().append("svg:path")
 							.attr("d", line)
-							.attr("class", "line_ave")
+							.attr("class", "line_median")
 							.attr('transform', function(d) {
 		    					if (normalize_state!=0) {
 		    						return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
@@ -2444,11 +2500,45 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 		    					}
 		    				})
 		    				.attr('vector-effect', 'non-scaling-stroke')
-		    				.attr("id", function(d,i){return "line_ave_"+i; })
+		    				.attr("id", function(d,i){return "line_median_"+i; })
 		    				.attr("stroke", function(d,i){ return tsne_colors[i] })
 		    				.style("stroke-width", "2")
 		    				.style("opacity", "1")
 			
+		} else if (mean_state!=0){
+			graph.selectAll(".area")
+				 .data(data_sd)
+				 .enter().append("path")
+				 			.attr("class","sd_area")
+				 			.attr('transform', function(d) {
+		    					if (normalize_state!=0) {
+		    						return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    					} else {
+		    						return null;
+		    					}
+		    				})
+				 			.attr("d",area)
+				 			.style("fill", function(d,i){ return tsne_colors[i] })
+				 			.style("opacity", "0.3")
+
+			graph.selectAll(".line")
+				.data(data_mean)
+				.enter().append("svg:path")
+							.attr("d", line)
+							.attr("class", "line_mean")
+							.attr('transform', function(d) {
+		    					if (normalize_state!=0) {
+		    						return 'scale(' + (1/(d.length/max_signal_length)) + ' 1)';
+		    					} else {
+		    						return null;
+		    					}
+		    				})
+		    				.attr('vector-effect', 'non-scaling-stroke')
+		    				.attr("id", function(d,i){return "line_mean_"+i; })
+		    				.attr("stroke", function(d,i){ return tsne_colors[i] })
+		    				.style("stroke-width", "2")
+		    				.style("opacity", "1")
+		
 		} else {
 			graph.selectAll(".line")
 				.data(data_brush)
@@ -2492,7 +2582,7 @@ function draw_signal(data_click,data_hover, data_brush, data_hover_kmer) {
 			console.log("zooming")
 			var yz = d3.event.transform.rescaleY(y);   // return a scale with new domain
 			d3.select('#y_axis_signal').call(yAxis.scale(yz));
-			d3.selectAll('.line_ave').attr('d', line.y(function(d) { return yz(d)}));
+			d3.selectAll('.line_median').attr('d', line.y(function(d) { return yz(d)}));
 			d3.selectAll('.line_click').attr('d', line.y(function(d) { return yz(d)}));
 			d3.selectAll('.line_brush').attr('d', line.y(function(d) { return yz(d)}));
 			//d3.selectAll('.line_hover').attr('d', line.y(function(d) { return yz(d)}));		// not the right way
@@ -2788,6 +2878,11 @@ function get_median(arr) {
 	return math.median(arr)	
 }
 
+// get a mean of an array "arr"
+function get_mean(arr) {
+	return math.mean(arr)	
+}
+
 //get a first quatile of an array "arr" (use method 2 from quartile's wikipedia page)
 function get_q1(arr) {
 	return math.quantileSeq(arr, 0.25)
@@ -2796,6 +2891,11 @@ function get_q1(arr) {
 //get a third quatile of an array "arr" (use method 2 from quartile's wikipedia page)
 function get_q3(arr) {
 	return math.quantileSeq(arr, 0.75)
+}
+
+//get standard deviation of an array "arr" (use method 2 from quartile's wikipedia page)
+function get_sd(arr) {
+	return math.std(arr)
 }
 
 // combine q1 and q3 arrays into an array of dicts (each dict contains q1 and q3 key-val pairs)
