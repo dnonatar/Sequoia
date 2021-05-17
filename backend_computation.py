@@ -10,12 +10,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description = "Sequoia arguments")     ## create parser object
 
-parser.add_argument("--f1", required=True)                   ## fast file1
-parser.add_argument("--f2")                                  ## fast file2
-parser.add_argument("--p", default = 0)                   ## penalty
-parser.add_argument("--k", required = True)                  ## k-mer list
-parser.add_argument("--s", default = 100)             ## number of signals for each 5-mer
-parser.add_argument("--o", required = True)                ## output directory
+parser.add_argument("--f1", required=True, help='Fast5 file for modified signals (required)')            ## fast file1
+parser.add_argument("--f2", help='Fast5 file for unmodified signals (optional)')                                  ## fast file2
+parser.add_argument("--p", default = 0, help='Dynamic time warping penalty (optional, default = 0)')                   ## penalty
+parser.add_argument("--k", required = True, help='CSV file with a list of 5-mer of interest (required)')                  ## k-mer list
+parser.add_argument("--s", default = 100, help='Sample size for each 5-mer (optional, default = 100)')             ## number of signals for each 5-mer
+parser.add_argument("--o", required = True, help='Output directory (required)')                ## output directory
 
 
 args = parser.parse_args()    ##run a function which extracts arguments from the command line input by user
