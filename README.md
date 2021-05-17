@@ -4,6 +4,8 @@ A web interface tool for visualizing similarities of nanopore sequencing data
 
 To use the tool, two separated steps must be executed. The first step is to run a python script via command line which will extract signal data from the input data and perform necessary computations. The second step is to open the visualization interface using the computational output from the first step.	
 
+The visualization demo with pre-loaded m5C data can be found at https://khreda.com/sequoia_demo/index.html.
+
 ## Install
 
 ``` git clone https://github.com/dnonatar/Sequoia.git ```
@@ -33,7 +35,7 @@ Parameters
 
 Example:
 
-``` python backend_computation_new.py --f1 test1.fast5 --f2 test2.fast5 --k kmer_list.csv --o myputput ```
+``` python backend_computation.py --f1 test1.fast5 --f2 test2.fast5 --k kmer_list.csv --o myputput ```
 
 kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
@@ -58,8 +60,5 @@ Below is how the landing page looks like. In the 'Type Input Folder' textbox, ty
 
 ![image 1](/images/landing_page.png)
 
-## Demo
-This is the visualization demo with pre-loaded data.
 
-http://research.vis.ninja/sequoia/
 
