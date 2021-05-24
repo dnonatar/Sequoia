@@ -35,7 +35,7 @@ Parameters
 
 Example:
 
-``` python backend_computation.py --f1 test1.fast5 --f2 test2.fast5 --k kmer_list.csv --o myputput ```
+``` python backend_computation.py --f1 test.fast5 --k kmer_list.csv --o myputput ```
 
 kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
