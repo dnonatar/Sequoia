@@ -13,10 +13,10 @@ The visualization demo with pre-loaded m5C data can be found at https://khreda.c
 ## Backend Computation 
 
 Python 3 and the following libraries are required.
-* pandas
-* numpy
-* h5py
-* dtaidistance 
+* pandas (0.25 or newer)
+* numpy (1.17 or newer)
+* h5py (2.9 or newer)
+* dtaidistance (1.2.3 or newer)
 
 Please refer to https://dtaidistance.readthedocs.io/en/latest/ for further details on the dtaidistance library.
 
@@ -35,7 +35,7 @@ Parameters
 
 Example:
 
-``` python backend_computation.py --f1 test1.fast5 --f2 test2.fast5 --k kmer_list.csv --o myputput ```
+``` python backend_computation.py --f1 test.fast5 --k kmer_list.csv --o myputput ```
 
 kmer_list.csv would contains a list of 5-mers in a single column (no header). A symbol (*) is used for either A, C, T, G.
 
